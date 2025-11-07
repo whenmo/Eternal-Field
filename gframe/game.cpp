@@ -12,8 +12,6 @@
 #include "single_mode.h"
 #include <thread>
 
-const unsigned short PRO_VERSION = 0x1362;
-
 namespace ygo {
 
 Game* mainGame;
@@ -534,21 +532,14 @@ bool Game::Initialize() {
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
 	//pos select
-	wPosSelect = env->addWindow(irr::core::rect<irr::s32>(340, 200, 935, 410), false, dataManager.GetSysString(561));
-	wPosSelect->getCloseButton()->setVisible(false);
-	wPosSelect->setVisible(false);
-	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(10, 45, 150, 185), wPosSelect, BUTTON_POS_AU);
-	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
-	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(155, 45, 295, 185), wPosSelect, BUTTON_POS_AD);
-	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
-	btnPSAD->setImage(imageManager.tCover[2]);
-	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(300, 45, 440, 185), wPosSelect, BUTTON_POS_DU);
-	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
-	btnPSDU->setImageRotation(270);
-	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(445, 45, 585, 185), wPosSelect, BUTTON_POS_DD);
-	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
-	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[2]);
+	wFaceSelect = env->addWindow(irr::core::rect<irr::s32>(340, 200, 935, 410), false, dataManager.GetSysString(561));
+	wFaceSelect->getCloseButton()->setVisible(false);
+	wFaceSelect->setVisible(false);
+	btnFU = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(10, 45, 150, 185), wFaceSelect, BUTTON_FACE_UP);
+	btnFU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
+	btnFD = irr::gui::CGUIImageButton::addImageButton(env, irr::core::rect<irr::s32>(155, 45, 295, 185), wFaceSelect, BUTTON_FACE_DOWN);
+	btnFD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.5f, CARD_IMG_HEIGHT * 0.5f));
+	btnFD->setImage(imageManager.tCover[2]);
 	//card select
 	wCardSelect = env->addWindow(irr::core::rect<irr::s32>(320, 100, 1000, 400), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
@@ -599,7 +590,7 @@ bool Game::Initialize() {
 	wANAttribute = env->addWindow(irr::core::rect<irr::s32>(500, 200, 830, 285), false, dataManager.GetSysString(562));
 	wANAttribute->getCloseButton()->setVisible(false);
 	wANAttribute->setVisible(false);
-	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
+	for (int i = 0; i < FROM_COUNT; ++i)
 		chkAttribute[i] = env->addCheckBox(false, irr::core::rect<irr::s32>(10 + (i % 4) * 80, 25 + (i / 4) * 25, 90 + (i % 4) * 80, 50 + (i / 4) * 25),
 			wANAttribute, CHECK_ATTRIBUTE, dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i));
 	//announce race
@@ -741,7 +732,7 @@ bool Game::Initialize() {
 	cbAttribute = env->addComboBox(irr::core::rect<irr::s32>(60, 20 + 50 / 6, 195, 40 + 50 / 6), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
-	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
+	for (int i = 0; i < FROM_COUNT; ++i)
 		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i), 0x1U << i);
 	stRace = env->addStaticText(dataManager.GetSysString(1321), irr::core::rect<irr::s32>(10, 42 + 75 / 6, 70, 62 + 75 / 6), false, false, wFilter);
 	cbRace = env->addComboBox(irr::core::rect<irr::s32>(60, 40 + 75 / 6, 195, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
@@ -1581,11 +1572,11 @@ void Game::ShowCardInfo(int code, bool resize) {
 	else {
 		stSetName->setText(L"");
 	}
-	if(is_valid && cit->second.type & TYPE_MONSTER) {
+	if(is_valid && cit->second.type & TYPE_MONS) {
 		auto& cd = cit->second;
 		const auto& type = dataManager.FormatType(cd.type);
 		const auto& race = dataManager.FormatRace(cd.race);
-		const auto& attribute = dataManager.FormatAttribute(cd.attribute);
+		const auto& attribute = dataManager.FormatAttribute(cd.from);
 		myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
 		stInfo->setText(formatBuffer);
 		int offset_info = 0;
@@ -1598,21 +1589,21 @@ void Game::ShowCardInfo(int code, bool resize) {
 		if(!(cd.type & TYPE_LINK)) {
 			if(cd.type & TYPE_XYZ)
 				form = L"\u2606";
-			if(cd.attack < 0 && cd.defense < 0)
+			if(cd.atk < 0 && cd.defense < 0)
 				myswprintf(adBuffer, L"?/?");
-			else if(cd.attack < 0)
+			else if(cd.atk < 0)
 				myswprintf(adBuffer, L"?/%d", cd.defense);
 			else if(cd.defense < 0)
-				myswprintf(adBuffer, L"%d/?", cd.attack);
+				myswprintf(adBuffer, L"%d/?", cd.atk);
 			else
-				myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
+				myswprintf(adBuffer, L"%d/%d", cd.atk, cd.defense);
 		} else {
 			form = L"LINK-";
-			const auto& link_marker = dataManager.FormatLinkMarker(cd.link_marker);
-			if(cd.attack < 0)
+			const auto& link_marker = dataManager.FormatLinkMarker(cd.move_marker);
+			if(cd.atk < 0)
 				myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
 			else
-				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, link_marker.c_str());
+				myswprintf(adBuffer, L"%d/-   %ls", cd.atk, link_marker.c_str());
 		}
 		if(cd.type & TYPE_PENDULUM) {
 			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
@@ -1748,8 +1739,7 @@ void Game::ErrorLog(const char* msg) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
-	btnPSAU->setImage();
-	btnPSDU->setImage();
+	btnFU->setImage();
 	for(int i=0; i<=4; ++i) {
 		btnCardSelect[i]->setImage();
 		btnCardDisplay[i]->setImage();
@@ -1784,7 +1774,7 @@ void Game::CloseGameWindow() {
 	wMessage->setVisible(false);
 	wOptions->setVisible(false);
 	wPhase->setVisible(false);
-	wPosSelect->setVisible(false);
+	wFaceSelect->setVisible(false);
 	wQuery->setVisible(false);
 	wReplayControl->setVisible(false);
 	wReplaySave->setVisible(false);
@@ -1951,7 +1941,7 @@ void Game::OnResize() {
 	wQuery->setRelativePosition(ResizeWin(490, 200, 840, 340));
 	wSurrender->setRelativePosition(ResizeWin(490, 200, 840, 340));
 	wOptions->setRelativePosition(ResizeWin(490, 200, 840, 340));
-	wPosSelect->setRelativePosition(ResizeWin(340, 200, 935, 410));
+	wFaceSelect->setRelativePosition(ResizeWin(340, 200, 935, 410));
 	wCardSelect->setRelativePosition(ResizeWin(320, 100, 1000, 400));
 	wANNumber->setRelativePosition(ResizeWin(550, 180, 780, 430));
 	wANCard->setRelativePosition(ResizeWin(510, 120, 820, 420));

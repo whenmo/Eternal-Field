@@ -262,24 +262,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				}
 				break;
 			}
-			case BUTTON_POS_AU: {
-				DuelClient::SetResponseI(POS_FACEUP_ATTACK);
-				mainGame->HideElement(mainGame->wPosSelect, true);
+			case BUTTON_FACE_UP: {
+				DuelClient::SetResponseI(FACE_UP);
+				mainGame->HideElement(mainGame->wFaceSelect, true);
 				break;
 			}
-			case BUTTON_POS_AD: {
-				DuelClient::SetResponseI(POS_FACEDOWN_ATTACK);
-				mainGame->HideElement(mainGame->wPosSelect, true);
-				break;
-			}
-			case BUTTON_POS_DU: {
-				DuelClient::SetResponseI(POS_FACEUP_DEFENSE);
-				mainGame->HideElement(mainGame->wPosSelect, true);
-				break;
-			}
-			case BUTTON_POS_DD: {
-				DuelClient::SetResponseI(POS_FACEDOWN_DEFENSE);
-				mainGame->HideElement(mainGame->wPosSelect, true);
+			case BUTTON_FACE_DOWN: {
+				DuelClient::SetResponseI(FACE_DOWN);
+				mainGame->HideElement(mainGame->wFaceSelect, true);
 				break;
 			}
 			case BUTTON_OPTION_PREV: {
@@ -412,19 +402,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 								selectable_cards.push_back(deck[command_controler][i]);
 						break;
 					}
-					case LOCATION_GRAVE: {
+					case LOCATION_DROP: {
 						for(size_t i = 0; i < grave[command_controler].size(); ++i)
 							if(grave[command_controler][i]->cmdFlag & COMMAND_ACTIVATE)
 								selectable_cards.push_back(grave[command_controler][i]);
 						break;
 					}
-					case LOCATION_REMOVED: {
+					case LOCATION_VOID: {
 						for(size_t i = 0; i < remove[command_controler].size(); ++i)
 							if(remove[command_controler][i]->cmdFlag & COMMAND_ACTIVATE)
 								selectable_cards.push_back(remove[command_controler][i]);
 						break;
 					}
-					case LOCATION_EXTRA: {
+					case LOCATION_ADECK: {
 						for(size_t i = 0; i < extra[command_controler].size(); ++i)
 							if(extra[command_controler][i]->cmdFlag & COMMAND_ACTIVATE)
 								selectable_cards.push_back(extra[command_controler][i]);
@@ -487,13 +477,13 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 								selectable_cards.push_back(deck[command_controler][i]);
 						break;
 					}
-					case LOCATION_GRAVE: {
+					case LOCATION_DROP: {
 						for(size_t i = 0; i < grave[command_controler].size(); ++i)
 							if(grave[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
 								selectable_cards.push_back(grave[command_controler][i]);
 						break;
 					}
-					case LOCATION_EXTRA: {
+					case LOCATION_ADECK: {
 						for(size_t i = 0; i < extra[command_controler].size(); ++i)
 							if(extra[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
 								selectable_cards.push_back(extra[command_controler][i]);
@@ -578,19 +568,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_GRAVE: {
+				case LOCATION_DROP: {
 					selectable_cards.assign(grave[command_controler].rbegin(), grave[command_controler].rend());
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_REMOVED: {
+				case LOCATION_VOID: {
 					selectable_cards.assign(remove[command_controler].rbegin(), remove[command_controler].rend());
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_EXTRA: {
+				case LOCATION_ADECK: {
 					selectable_cards.assign(extra[command_controler].rbegin(), extra[command_controler].rend());
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
@@ -907,9 +897,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					} else {
 						if(select_continuous)
 							myswprintf(formatBuffer, L"%ls", dataManager.unknown_string);
-						else if(cant_check_grave && selectable_cards[i]->location == LOCATION_GRAVE)
+						else if(cant_check_grave && selectable_cards[i]->location == LOCATION_DROP)
 							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i]->location, 0));
-						else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY)
+						else if(selectable_cards[i + pos]->location == LOCATION_GENE)
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
 								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget->location, selectable_cards[i + pos]->overlayTarget->sequence),
 								selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
@@ -921,7 +911,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					// color
 					if(select_continuous)
 						mainGame->stCardPos[i]->setBackgroundColor(0xffffffff);
-					else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY) {
+					else if(selectable_cards[i + pos]->location == LOCATION_GENE) {
 						if(selectable_cards[i + pos]->owner != selectable_cards[i + pos]->overlayTarget->controler)
 							mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 						if(selectable_cards[i + pos]->is_selected)
@@ -930,8 +920,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							mainGame->stCardPos[i]->setBackgroundColor(0xffd0d0d0);
 						else
 							mainGame->stCardPos[i]->setBackgroundColor(0xffffffff);
-					} else if(selectable_cards[i + pos]->location == LOCATION_DECK || selectable_cards[i + pos]->location == LOCATION_EXTRA || selectable_cards[i + pos]->location == LOCATION_REMOVED) {
-						if(selectable_cards[i + pos]->position & POS_FACEDOWN)
+					} else if(selectable_cards[i + pos]->location == LOCATION_DECK || selectable_cards[i + pos]->location == LOCATION_ADECK || selectable_cards[i + pos]->location == LOCATION_VOID) {
+						if(selectable_cards[i + pos]->position & FACE_DOWN)
 							mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 						if(selectable_cards[i + pos]->is_selected)
 							mainGame->stCardPos[i]->setBackgroundColor(0xffffff00);
@@ -961,7 +951,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler + 2]);
 					mainGame->btnCardDisplay[i]->setRelativePosition(irr::core::rect<irr::s32>(30 + i * 125, 55, 30 + 120 + i * 125, 225));
 					wchar_t formatBuffer[2048];
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
+					if(display_cards[i + pos]->location == LOCATION_GENE) {
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
 								dataManager.FormatLocation(display_cards[i + pos]->overlayTarget->location, display_cards[i + pos]->overlayTarget->sequence),
 								display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
@@ -969,7 +959,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]->location, display_cards[i + pos]->sequence),
 							display_cards[i + pos]->sequence + 1);
 					mainGame->stDisplayPos[i]->setText(formatBuffer);
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
+					if(display_cards[i + pos]->location == LOCATION_GENE) {
 						if(display_cards[i + pos]->owner != display_cards[i + pos]->overlayTarget->controler)
 							mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
 						// BackgroundColor: controller of the xyz monster
@@ -977,8 +967,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xffd0d0d0);
 						else
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xffffffff);
-					} else if(display_cards[i + pos]->location == LOCATION_EXTRA || display_cards[i + pos]->location == LOCATION_REMOVED) {
-						if(display_cards[i + pos]->position & POS_FACEDOWN)
+					} else if(display_cards[i + pos]->location == LOCATION_ADECK || display_cards[i + pos]->location == LOCATION_VOID) {
+						if(display_cards[i + pos]->position & FACE_DOWN)
 							mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
 						if(display_cards[i + pos]->controler)
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xffd0d0d0);
@@ -1117,7 +1107,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_GRAVE: {
+				case LOCATION_DROP: {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
@@ -1125,7 +1115,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_REMOVED: {
+				case LOCATION_VOID: {
 					if(remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
@@ -1133,7 +1123,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_EXTRA: {
+				case LOCATION_ADECK: {
 					if(extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
@@ -1159,7 +1149,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_GRAVE: {
+				case LOCATION_DROP: {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
@@ -1167,7 +1157,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_REMOVED: {
+				case LOCATION_VOID: {
 					if (remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
@@ -1175,7 +1165,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
-				case LOCATION_EXTRA: {
+				case LOCATION_ADECK: {
 					if (extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
@@ -1195,13 +1185,13 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			case MSG_WAITING: {
 				switch(hovered_location) {
 				case LOCATION_MZONE:
-				case LOCATION_SZONE: {
+				case LOCATION_CALL: {
 					if(!clicked_card || clicked_card->overlayed.size() == 0)
 						break;
 					ShowMenu(COMMAND_LIST, x, y);
 					break;
 				}
-				case LOCATION_GRAVE: {
+				case LOCATION_DROP: {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					if(cant_check_grave)
@@ -1209,13 +1199,13 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					ShowMenu(COMMAND_LIST, x, y);
 					break;
 				}
-				case LOCATION_REMOVED: {
+				case LOCATION_VOID: {
 					if(remove[hovered_controler].size() == 0)
 						break;
 					ShowMenu(COMMAND_LIST, x, y);
 					break;
 				}
-				case LOCATION_EXTRA: {
+				case LOCATION_ADECK: {
 					if(extra[hovered_controler].size() == 0)
 						break;
 					ShowMenu(COMMAND_LIST, x, y);
@@ -1242,7 +1232,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				}
 				case LOCATION_HAND:
 				case LOCATION_MZONE:
-				case LOCATION_SZONE: {
+				case LOCATION_CALL: {
 					if(!clicked_card)
 						break;
 					int command_flag = clicked_card->cmdFlag;
@@ -1252,7 +1242,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					ShowMenu(command_flag, x, y);
 					break;
 				}
-				case LOCATION_GRAVE: {
+				case LOCATION_DROP: {
 					int command_flag = 0;
 					if(grave[hovered_controler].size() == 0)
 						break;
@@ -1265,7 +1255,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					ShowMenu(command_flag, x, y);
 					break;
 				}
-				case LOCATION_REMOVED: {
+				case LOCATION_VOID: {
 					int command_flag = 0;
 					if(remove[hovered_controler].size() == 0)
 						break;
@@ -1276,7 +1266,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					ShowMenu(command_flag, x, y);
 					break;
 				}
-				case LOCATION_EXTRA: {
+				case LOCATION_ADECK: {
 					int command_flag = 0;
 					if(extra[hovered_controler].size() == 0)
 						break;
@@ -1301,7 +1291,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case MSG_SELECT_PLACE:
 			case MSG_SELECT_DISFIELD: {
-				if (!(hovered_location & LOCATION_ONFIELD))
+				if (!(hovered_location & LOCATION_FIELD))
 					break;
 				unsigned int flag = 0x1U << (hovered_sequence + (hovered_controler << 4) + ((hovered_location == LOCATION_MZONE) ? 0 : 8));
 				if (flag & selectable_field) {
@@ -1327,7 +1317,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							for (int i = 0; i < 8; ++i, filter <<= 1) {
 								if (selected_field & filter) {
 									respbuf[p] = mainGame->LocalPlayer(0);
-									respbuf[p + 1] = LOCATION_SZONE;
+									respbuf[p + 1] = LOCATION_CALL;
 									respbuf[p + 2] = i;
 									p += 3;
 								}
@@ -1345,7 +1335,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							for (int i = 0; i < 8; ++i, filter <<= 1) {
 								if (selected_field & filter) {
 									respbuf[p] = mainGame->LocalPlayer(1);
-									respbuf[p + 1] = LOCATION_SZONE;
+									respbuf[p + 1] = LOCATION_CALL;
 									respbuf[p + 2] = i;
 									p += 3;
 								}
@@ -1519,19 +1509,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				GetHoverField(x, y);
 				if(hovered_location & 0xe)
 					mcard = GetCard(hovered_controler, hovered_location, hovered_sequence);
-				else if(hovered_location == LOCATION_GRAVE) {
+				else if(hovered_location == LOCATION_DROP) {
 					if(grave[hovered_controler].size())
 						mcard = grave[hovered_controler].back();
-				} else if(hovered_location == LOCATION_REMOVED) {
+				} else if(hovered_location == LOCATION_VOID) {
 					if(remove[hovered_controler].size()) {
 						mcard = remove[hovered_controler].back();
-						if(mcard->position & POS_FACEDOWN)
+						if(mcard->position & FACE_DOWN)
 							mcard = 0;
 					}
-				} else if(hovered_location == LOCATION_EXTRA) {
+				} else if(hovered_location == LOCATION_ADECK) {
 					if(extra[hovered_controler].size()) {
 						mcard = extra[hovered_controler].back();
-						if(mcard->position & POS_FACEDOWN)
+						if(mcard->position & FACE_DOWN)
 							mcard = 0;
 					}
 				} else if(hovered_location == LOCATION_DECK) {
@@ -1581,7 +1571,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							std::wstring str;
 							myswprintf(formatBuffer, L"%ls", dataManager.GetName(mcard->code));
 							str.append(formatBuffer);
-							if(mcard->type & TYPE_MONSTER) {
+							if(mcard->type & TYPE_MONS) {
 								if(mcard->alias && std::wcscmp(dataManager.GetName(mcard->code), dataManager.GetName(mcard->alias))) {
 									myswprintf(formatBuffer, L"\n(%ls)", dataManager.GetName(mcard->alias));
 									str.append(formatBuffer);
@@ -1610,7 +1600,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									myswprintf(formatBuffer, L"\n(%ls)", dataManager.GetName(mcard->alias));
 									str.append(formatBuffer);
 								}
-								if(mcard->location == LOCATION_SZONE && (mcard->type & TYPE_PENDULUM)) {
+								if(mcard->location == LOCATION_CALL && (mcard->type & TYPE_PENDULUM)) {
 									myswprintf(formatBuffer, L"\n%d/%d", mcard->lscale, mcard->rscale);
 									str.append(formatBuffer);
 								}
@@ -1619,7 +1609,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 								myswprintf(formatBuffer, L"\n[%ls]: %d", dataManager.GetCounterName(ctit->first), ctit->second);
 								str.append(formatBuffer);
 							}
-							if(mcard->cHint && mcard->chValue && (mcard->location & LOCATION_ONFIELD)) {
+							if(mcard->cHint && mcard->chValue && (mcard->location & LOCATION_FIELD)) {
 								if(mcard->cHint == CHINT_TURN)
 									myswprintf(formatBuffer, L"\n%ls%d", dataManager.GetSysString(211), mcard->chValue);
 								else if(mcard->cHint == CHINT_CARD)
@@ -2149,25 +2139,25 @@ void ClientField::GetHoverField(int x, int y) {
 		if(boardx >= matManager.vFieldExtra[0][0].Pos.X && boardx <= matManager.vFieldExtra[0][1].Pos.X) {
 			if(boardy >= matManager.vFieldExtra[0][0].Pos.Y && boardy <= matManager.vFieldExtra[0][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_EXTRA;
+				hovered_location = LOCATION_ADECK;
 			} else if(boardy >= matManager.vFieldSzone[0][5][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][5][rule][2].Pos.Y) {//field
 				hovered_controler = 0;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 5;
 			} else if(boardy >= matManager.vFieldSzone[0][6][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][6][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 6;
 			} else if(rule == 1 && boardy >= matManager.vFieldRemove[1][rule][2].Pos.Y && boardy <= matManager.vFieldRemove[1][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_REMOVED;
+				hovered_location = LOCATION_VOID;
 			} else if(rule == 0 && boardy >= matManager.vFieldSzone[1][7][rule][2].Pos.Y && boardy <= matManager.vFieldSzone[1][7][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 7;
 			} else if(boardy >= matManager.vFieldGrave[1][rule][2].Pos.Y && boardy <= matManager.vFieldGrave[1][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_GRAVE;
+				hovered_location = LOCATION_DROP;
 			} else if(boardy >= matManager.vFieldDeck[1][2].Pos.Y && boardy <= matManager.vFieldDeck[1][0].Pos.Y) {
 				hovered_controler = 1;
 				hovered_location = LOCATION_DECK;
@@ -2179,13 +2169,13 @@ void ClientField::GetHoverField(int x, int y) {
 		} else if(rule == 0 && boardx >= matManager.vFieldRemove[1][rule][1].Pos.X && boardx <= matManager.vFieldRemove[1][rule][0].Pos.X) {
 			if(boardy >= matManager.vFieldRemove[1][rule][2].Pos.Y && boardy <= matManager.vFieldRemove[1][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_REMOVED;
+				hovered_location = LOCATION_VOID;
 			}
 		} else if(rule == 1 && boardx >= matManager.vFieldSzone[1][7][rule][1].Pos.X && boardx <= matManager.vFieldSzone[1][7][rule][2].Pos.X) {
 			// deprecated szone[7]
 			if(boardy >= matManager.vFieldSzone[1][7][rule][2].Pos.Y && boardy <= matManager.vFieldSzone[1][7][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 7;
 			}
 		} else if(boardx >= matManager.vFieldDeck[0][0].Pos.X && boardx <= matManager.vFieldDeck[0][1].Pos.X) {
@@ -2194,37 +2184,37 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_location = LOCATION_DECK;
 			} else if(boardy >= matManager.vFieldGrave[0][rule][0].Pos.Y && boardy <= matManager.vFieldGrave[0][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_GRAVE;
+				hovered_location = LOCATION_DROP;
 			} else if(boardy >= matManager.vFieldSzone[1][6][rule][2].Pos.Y && boardy <= matManager.vFieldSzone[1][6][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 6;
 			} else if(rule == 0 && boardy >= matManager.vFieldSzone[0][7][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][7][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 7;
 			} else if(rule == 1 && boardy >= matManager.vFieldRemove[0][rule][0].Pos.Y && boardy <= matManager.vFieldRemove[0][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_REMOVED;
+				hovered_location = LOCATION_VOID;
 			} else if(boardy >= matManager.vFieldSzone[1][5][rule][2].Pos.Y && boardy <= matManager.vFieldSzone[1][5][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 5;
 			} else if(boardy >= matManager.vFieldExtra[1][2].Pos.Y && boardy <= matManager.vFieldExtra[1][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_EXTRA;
+				hovered_location = LOCATION_ADECK;
 			}
 		} else if(rule == 1 && boardx >= matManager.vFieldSzone[0][7][rule][0].Pos.X && boardx <= matManager.vFieldSzone[0][7][rule][1].Pos.X) {
 			// deprecated szone[7]
 			if(boardy >= matManager.vFieldSzone[0][7][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][7][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 7;
 			}
 		} else if(rule == 0 && boardx >= matManager.vFieldRemove[0][rule][0].Pos.X && boardx <= matManager.vFieldRemove[0][rule][1].Pos.X) {
 			if(boardy >= matManager.vFieldRemove[0][rule][0].Pos.Y && boardy <= matManager.vFieldRemove[0][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_REMOVED;
+				hovered_location = LOCATION_VOID;
 			}
 		} else if(boardx >= matManager.vFieldMzone[0][0][0].Pos.X && boardx <= matManager.vFieldMzone[0][4][1].Pos.X) {
 			int sequence = (boardx - matManager.vFieldMzone[0][0][0].Pos.X) / (matManager.vFieldMzone[0][0][1].Pos.X - matManager.vFieldMzone[0][0][0].Pos.X);
@@ -2232,7 +2222,7 @@ void ClientField::GetHoverField(int x, int y) {
 				sequence = 4;
 			if(boardy > matManager.vFieldSzone[0][0][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][0][rule][2].Pos.Y) {
 				hovered_controler = 0;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = sequence;
 			} else if(boardy >= matManager.vFieldMzone[0][0][0].Pos.Y && boardy <= matManager.vFieldMzone[0][0][2].Pos.Y) {
 				hovered_controler = 0;
@@ -2303,7 +2293,7 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = 4 - sequence;
 			} else if(boardy >= matManager.vFieldSzone[1][0][rule][2].Pos.Y && boardy < matManager.vFieldSzone[1][0][rule][0].Pos.Y) {
 				hovered_controler = 1;
-				hovered_location = LOCATION_SZONE;
+				hovered_location = LOCATION_CALL;
 				hovered_sequence = 4 - sequence;
 			}
 		}
@@ -2338,7 +2328,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		height += offset;
 	} else mainGame->btnMSet->setVisible(false);
 	if(flag & COMMAND_SSET) {
-		if(!(clicked_card->type & TYPE_MONSTER))
+		if(!(clicked_card->type & TYPE_MONS))
 			mainGame->btnSSet->setText(dataManager.GetSysString(1153));
 		else
 			mainGame->btnSSet->setText(dataManager.GetSysString(1159));
@@ -2346,8 +2336,9 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnSSet->setRelativePosition(irr::core::vector2di(1, height));
 		height += offset;
 	} else mainGame->btnSSet->setVisible(false);
+	/*
 	if(flag & COMMAND_REPOS) {
-		if(clicked_card->position & POS_FACEDOWN)
+		if(clicked_card->position & FACE_DOWN)
 			mainGame->btnRepos->setText(dataManager.GetSysString(1154));
 		else if(clicked_card->position & POS_ATTACK)
 			mainGame->btnRepos->setText(dataManager.GetSysString(1155));
@@ -2357,6 +2348,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnRepos->setRelativePosition(irr::core::vector2di(1, height));
 		height += offset;
 	} else mainGame->btnRepos->setVisible(false);
+	*/
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(irr::core::vector2di(1, height));

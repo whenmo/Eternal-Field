@@ -932,27 +932,27 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->ebScale->setEnabled(true);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_MONSTER + TYPE_NORMAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1055), TYPE_MONSTER + TYPE_EFFECT);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1056), TYPE_MONSTER + TYPE_FUSION);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_MONSTER + TYPE_RITUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1063), TYPE_MONSTER + TYPE_SYNCHRO);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1073), TYPE_MONSTER + TYPE_XYZ);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1074), TYPE_MONSTER + TYPE_PENDULUM);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1076), TYPE_MONSTER + TYPE_LINK);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1075), TYPE_MONSTER + TYPE_SPSUMMON);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_MONS + TYPE_NORMAL);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1055), TYPE_MONS + TYPE_EFFECT);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1056), TYPE_MONS + TYPE_FUSION);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_MONS + TYPE_RITUAL);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1063), TYPE_MONS + TYPE_SYNCHRO);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1073), TYPE_MONS + TYPE_XYZ);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1074), TYPE_MONS + TYPE_PENDULUM);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1076), TYPE_MONS + TYPE_LINK);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1075), TYPE_MONS + TYPE_SPSUMMON);
 					myswprintf(normaltuner, L"%ls|%ls", dataManager.GetSysString(1054), dataManager.GetSysString(1062));
-					mainGame->cbCardType2->addItem(normaltuner, TYPE_MONSTER + TYPE_NORMAL + TYPE_TUNER);
+					mainGame->cbCardType2->addItem(normaltuner, TYPE_MONS + TYPE_NORMAL + TYPE_TUNER);
 					myswprintf(normalpen, L"%ls|%ls", dataManager.GetSysString(1054), dataManager.GetSysString(1074));
-					mainGame->cbCardType2->addItem(normalpen, TYPE_MONSTER + TYPE_NORMAL + TYPE_PENDULUM);
+					mainGame->cbCardType2->addItem(normalpen, TYPE_MONS + TYPE_NORMAL + TYPE_PENDULUM);
 					myswprintf(syntuner, L"%ls|%ls", dataManager.GetSysString(1063), dataManager.GetSysString(1062));
-					mainGame->cbCardType2->addItem(syntuner, TYPE_MONSTER + TYPE_SYNCHRO + TYPE_TUNER);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1062), TYPE_MONSTER + TYPE_TUNER);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1061), TYPE_MONSTER + TYPE_DUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1060), TYPE_MONSTER + TYPE_UNION);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1059), TYPE_MONSTER + TYPE_SPIRIT);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1071), TYPE_MONSTER + TYPE_FLIP);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1072), TYPE_MONSTER + TYPE_TOON);
+					mainGame->cbCardType2->addItem(syntuner, TYPE_MONS + TYPE_SYNCHRO + TYPE_TUNER);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1062), TYPE_MONS + TYPE_TUNER);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1061), TYPE_MONS + TYPE_DUAL);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1060), TYPE_MONS + TYPE_UNION);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1059), TYPE_MONS + TYPE_SPIRIT);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1071), TYPE_MONS + TYPE_FLIP);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1072), TYPE_MONS + TYPE_TOON);
 					break;
 				}
 				case 2: {
@@ -965,12 +965,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->ebScale->setEnabled(false);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_SPELL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_SPELL + TYPE_QUICKPLAY);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_SPELL + TYPE_CONTINUOUS);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_SPELL + TYPE_RITUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_SPELL + TYPE_EQUIP);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1069), TYPE_SPELL + TYPE_FIELD);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_CALL);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_QUICKPLAY);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_CALL + TYPE_CONTINUOUS);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_CALL + TYPE_RITUAL);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_CALL + TYPE_EQUIP);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1069), TYPE_CALL + TYPE_FIELD);
 					break;
 				}
 				case 3: {
@@ -983,9 +983,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->ebScale->setEnabled(false);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_TRAP);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_TRAP + TYPE_CONTINUOUS);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1070), TYPE_TRAP + TYPE_COUNTER);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_BANE);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_BANE + TYPE_CONTINUOUS);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1070), TYPE_BANE + TYPE_COUNTER);
 					break;
 				}
 				}
@@ -1486,16 +1486,16 @@ void DeckBuilder::FilterCards() {
 			continue;
 		switch(filter_type) {
 		case 1: {
-			if(!(data.type & TYPE_MONSTER) || (data.type & filter_type2) != filter_type2)
+			if(!(data.type & TYPE_MONS) || (data.type & filter_type2) != filter_type2)
 				continue;
 			if(filter_race && data.race != filter_race)
 				continue;
-			if(filter_attrib && data.attribute != filter_attrib)
+			if(filter_attrib && data.from != filter_attrib)
 				continue;
 			if(filter_atktype) {
-				if((filter_atktype == 1 && data.attack != filter_atk) || (filter_atktype == 2 && data.attack < filter_atk)
-				        || (filter_atktype == 3 && data.attack <= filter_atk) || (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0))
-				        || (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) || (filter_atktype == 6 && data.attack != -2))
+				if((filter_atktype == 1 && data.atk != filter_atk) || (filter_atktype == 2 && data.atk < filter_atk)
+				        || (filter_atktype == 3 && data.atk <= filter_atk) || (filter_atktype == 4 && (data.atk > filter_atk || data.atk < 0))
+				        || (filter_atktype == 5 && (data.atk >= filter_atk || data.atk < 0)) || (filter_atktype == 6 && data.atk != -2))
 					continue;
 			}
 			if(filter_deftype) {
@@ -1521,14 +1521,14 @@ void DeckBuilder::FilterCards() {
 			break;
 		}
 		case 2: {
-			if(!(data.type & TYPE_SPELL))
+			if(!(data.type & TYPE_CALL))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
 				continue;
 			break;
 		}
 		case 3: {
-			if(!(data.type & TYPE_TRAP))
+			if(!(data.type & TYPE_BANE))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
 				continue;
@@ -1537,7 +1537,7 @@ void DeckBuilder::FilterCards() {
 		}
 		if(filter_effect && !(data.category & filter_effect))
 			continue;
-		if(filter_marks && (data.link_marker & filter_marks) != filter_marks)
+		if(filter_marks && (data.move_marker & filter_marks) != filter_marks)
 			continue;
 		if(filter_lm) {
 			if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))

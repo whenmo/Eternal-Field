@@ -187,28 +187,28 @@ bool ReplayMode::StartDuel() {
 				for (const auto& code : cur_replay.decks[i].main)
 					new_card(pduel, code, i, i, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
 				for (const auto& code : cur_replay.decks[i].extra)
-					new_card(pduel, code, i, i, LOCATION_EXTRA, 0, POS_FACEDOWN_DEFENSE);
+					new_card(pduel, code, i, i, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
 				mainGame->dField.Initial(mainGame->LocalPlayer(i), cur_replay.decks[i].main.size(), cur_replay.decks[i].extra.size());
 			}
 		} else {
 			for (const auto& code : cur_replay.decks[0].main)
 				new_card(pduel, code, 0, 0, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
 			for (const auto& code : cur_replay.decks[0].extra)
-				new_card(pduel, code, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN_DEFENSE);
+				new_card(pduel, code, 0, 0, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
 			mainGame->dField.Initial(mainGame->LocalPlayer(0), cur_replay.decks[0].main.size(), cur_replay.decks[0].extra.size());
 			for (const auto& code : cur_replay.decks[1].main)
 				new_tag_card(pduel, code, 0, LOCATION_DECK);
 			for (const auto& code : cur_replay.decks[1].extra)
-				new_tag_card(pduel, code, 0, LOCATION_EXTRA);
+				new_tag_card(pduel, code, 0, LOCATION_ADECK);
 			for (const auto& code : cur_replay.decks[2].main)
 				new_card(pduel, code, 1, 1, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
 			for (const auto& code : cur_replay.decks[2].extra)
-				new_card(pduel, code, 1, 1, LOCATION_EXTRA, 0, POS_FACEDOWN_DEFENSE);
+				new_card(pduel, code, 1, 1, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
 			mainGame->dField.Initial(mainGame->LocalPlayer(1), cur_replay.decks[2].main.size(), cur_replay.decks[2].extra.size());
 			for (const auto& code : cur_replay.decks[3].main)
 				new_tag_card(pduel, code, 1, LOCATION_DECK);
 			for (const auto& code : cur_replay.decks[3].extra)
-				new_tag_card(pduel, code, 1, LOCATION_EXTRA);
+				new_tag_card(pduel, code, 1, LOCATION_ADECK);
 		}
 	} else {
 		char filename[256]{};
@@ -402,7 +402,7 @@ bool ReplayMode::ReplayAnalyze(unsigned char* msg, unsigned int len) {
 			pbuf += 5;
 			return ReadReplayResponse();
 		}
-		case MSG_SELECT_POSITION: {
+		case MSG_SELECT_FACE: {
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 5;
 			return ReadReplayResponse();
@@ -531,7 +531,7 @@ bool ReplayMode::ReplayAnalyze(unsigned char* msg, unsigned int len) {
 			/*int cp = pbuf[11];*/
 			pbuf += 16;
 			DuelClient::ClientAnalyze(offset, pbuf - offset);
-			if(cl && !(cl & LOCATION_OVERLAY) && (pl != cl || pc != cc))
+			if(cl && !(cl & LOCATION_GENE) && (pl != cl || pc != cc))
 				ReplayRefreshSingle(cc, cl, cs);
 			else if(pl == cl && cl == LOCATION_DECK)
 				ReplayRefreshDeck(cc);
@@ -868,8 +868,8 @@ void ReplayMode::ReplayRefresh(int flag) {
 	queryBuffer.resize(SIZE_QUERY_BUFFER);
 	ReloadLocation(0, LOCATION_MZONE, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_MZONE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_SZONE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_SZONE, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_CALL, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_CALL, flag, queryBuffer);
 	ReloadLocation(0, LOCATION_HAND, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_HAND, flag, queryBuffer);
 }
@@ -882,13 +882,13 @@ inline void ReplayMode::ReplayRefreshHand(int player, int flag) {
 	ReplayRefreshLocation(player, LOCATION_HAND, flag);
 }
 inline void ReplayMode::ReplayRefreshGrave(int player, int flag) {
-	ReplayRefreshLocation(player, LOCATION_GRAVE, flag);
+	ReplayRefreshLocation(player, LOCATION_DROP, flag);
 }
 inline void ReplayMode::ReplayRefreshDeck(int player, int flag) {
 	ReplayRefreshLocation(player, LOCATION_DECK, flag);
 }
 inline void ReplayMode::ReplayRefreshExtra(int player, int flag) {
-	ReplayRefreshLocation(player, LOCATION_EXTRA, flag);
+	ReplayRefreshLocation(player, LOCATION_ADECK, flag);
 }
 void ReplayMode::ReplayRefreshSingle(int player, int location, int sequence, int flag) {
 	unsigned char queryBuffer[0x1000];
@@ -901,19 +901,19 @@ void ReplayMode::ReplayReload() {
 	unsigned int flag = 0xffdfff;
 	ReloadLocation(0, LOCATION_MZONE, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_MZONE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_SZONE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_SZONE, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_CALL, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_CALL, flag, queryBuffer);
 	ReloadLocation(0, LOCATION_HAND, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_HAND, flag, queryBuffer);
 
 	ReloadLocation(0, LOCATION_DECK, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_DECK, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_EXTRA, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_EXTRA, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_GRAVE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_GRAVE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_REMOVED, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_REMOVED, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_ADECK, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_ADECK, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_DROP, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_DROP, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_VOID, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_VOID, flag, queryBuffer);
 }
 uint32_t ReplayMode::MessageHandler(intptr_t fduel, uint32_t type) {
 	if(!enable_log)

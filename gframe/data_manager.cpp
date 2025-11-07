@@ -30,20 +30,20 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
 		write_setcode(cd.setcode, setcode);
 		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
-		cd.attack = sqlite3_column_int(pStmt, 5);
+		cd.atk = sqlite3_column_int(pStmt, 5);
 		cd.defense = sqlite3_column_int(pStmt, 6);
 		if (cd.type & TYPE_LINK) {
-			cd.link_marker = cd.defense;
+			cd.move_marker = cd.defense;
 			cd.defense = 0;
 		}
 		else
-			cd.link_marker = 0;
+			cd.move_marker = 0;
 		uint32_t level = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 7));
 		cd.level = level & 0xff;
 		cd.lscale = (level >> 24) & 0xff;
 		cd.rscale = (level >> 16) & 0xff;
 		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 8));
-		cd.attribute = static_cast<decltype(cd.attribute)>(sqlite3_column_int64(pStmt, 9));
+		cd.from = static_cast<decltype(cd.from)>(sqlite3_column_int64(pStmt, 9));
 		cd.category = static_cast<decltype(cd.category)>(sqlite3_column_int64(pStmt, 10));
 		auto& cs = _strings[code];
 		if (const char* text = (const char*)sqlite3_column_text(pStmt, 12)) {
@@ -89,10 +89,9 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 	spmembuffer_t* mem = (spmembuffer_t*)std::calloc(sizeof(spmembuffer_t), 1);
 	spmemvfs_env_init();
 	mem->total = mem->used = reader->getSize();
-	mem->data = (char*)std::malloc(mem->total + 1);
+	mem->data = (char*)std::malloc(mem->total);
 	reader->read(mem->data, mem->total);
 	reader->drop();
-	(mem->data)[mem->total] = '\0';
 	bool ret{};
 	if (spmemvfs_open_db(&db, file, mem) != SQLITE_OK)
 		ret = Error(db.handle);
@@ -272,7 +271,7 @@ std::wstring DataManager::GetNumString(int num, bool bracket) const {
 	return numBuffer;
 }
 const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
-	if(location == LOCATION_SZONE) {
+	if(location == LOCATION_CALL) {
 		if(sequence < 5)
 			return GetSysString(1003);
 		else if(sequence == 5)
@@ -295,7 +294,7 @@ const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
 }
 std::wstring DataManager::FormatAttribute(unsigned int attribute) const {
 	std::wstring buffer;
-	for (int i = 0; i < ATTRIBUTES_COUNT; ++i) {
+	for (int i = 0; i < FROM_COUNT; ++i) {
 		if (attribute & (0x1U << i)) {
 			if (!buffer.empty())
 				buffer.push_back(L'|');
@@ -434,8 +433,8 @@ bool DataManager::deck_sort_lv(code_pointer p1, code_pointer p2) {
 			return type1 < type2;
 		if (p1->second.level != p2->second.level)
 			return p1->second.level > p2->second.level;
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
+		if (p1->second.atk != p2->second.atk)
+			return p1->second.atk > p2->second.atk;
 		if (p1->second.defense != p2->second.defense)
 			return p1->second.defense > p2->second.defense;
 		return p1->first < p2->first;
@@ -448,8 +447,8 @@ bool DataManager::deck_sort_atk(code_pointer p1, code_pointer p2) {
 	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
 		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
 	if ((p1->second.type & 0x7) == 1) {
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
+		if (p1->second.atk != p2->second.atk)
+			return p1->second.atk > p2->second.atk;
 		if (p1->second.defense != p2->second.defense)
 			return p1->second.defense > p2->second.defense;
 		if (p1->second.level != p2->second.level)
@@ -470,8 +469,8 @@ bool DataManager::deck_sort_def(code_pointer p1, code_pointer p2) {
 	if ((p1->second.type & 0x7) == 1) {
 		if (p1->second.defense != p2->second.defense)
 			return p1->second.defense > p2->second.defense;
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
+		if (p1->second.atk != p2->second.atk)
+			return p1->second.atk > p2->second.atk;
 		if (p1->second.level != p2->second.level)
 			return p1->second.level > p2->second.level;
 		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);

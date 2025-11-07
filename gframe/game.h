@@ -22,11 +22,11 @@
 #include <mutex>
 #include <functional>
 
-constexpr int DEFAULT_DUEL_RULE = 5;
+namespace ygo {
+
+constexpr int DEFAULT_DUEL_RULE = CURRENT_RULE;
 constexpr int CONFIG_LINE_SIZE = 1024;
 constexpr int TEXT_LINE_SIZE = 256;
-
-namespace ygo {
 
 template<size_t N>
 bool IsExtension(const wchar_t* filename, const wchar_t(&extension)[N]) {
@@ -476,9 +476,9 @@ public:
 	irr::gui::IGUIButton* btnOption[5];
 	irr::gui::IGUIScrollBar* scrOption;
 	//pos selection
-	irr::gui::IGUIWindow* wPosSelect;
-	irr::gui::CGUIImageButton* btnPSAU;
-	irr::gui::CGUIImageButton* btnPSAD;
+	irr::gui::IGUIWindow* wFaceSelect;
+	irr::gui::CGUIImageButton* btnFU;
+	irr::gui::CGUIImageButton* btnFD;
 	irr::gui::CGUIImageButton* btnPSDU;
 	irr::gui::CGUIImageButton* btnPSDD;
 	//card selection
@@ -660,7 +660,7 @@ extern Game* mainGame;
 #define COMMAND_SPSUMMON	0x0004
 #define COMMAND_MSET		0x0008
 #define COMMAND_SSET		0x0010
-#define COMMAND_REPOS		0x0020
+//#define COMMAND_REPOS		0x0020
 #define COMMAND_ATTACK		0x0040
 #define COMMAND_LIST		0x0080
 #define COMMAND_OPERATION	0x0100
@@ -721,10 +721,8 @@ extern Game* mainGame;
 #define BUTTON_HAND3				207
 #define BUTTON_FIRST				208
 #define BUTTON_SECOND				209
-#define BUTTON_POS_AU				210
-#define BUTTON_POS_AD				211
-#define BUTTON_POS_DU				212
-#define BUTTON_POS_DD				213
+#define BUTTON_FACE_UP				210
+#define BUTTON_FACE_DOWN			211
 #define BUTTON_OPTION_PREV			220
 #define BUTTON_OPTION_NEXT			221
 #define BUTTON_OPTION_OK			222

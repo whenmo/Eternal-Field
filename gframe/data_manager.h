@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <sqlite3.h>
-#include "../ocgcore/card_data.h"
+#include <card_data.h>
 
 namespace irr {
 	namespace io {
@@ -15,6 +15,7 @@ namespace irr {
 }
 
 namespace ygo {
+
 constexpr int MAX_STRING_ID = 0x7ff;
 constexpr uint32_t MIN_CARD_ID = (uint32_t)(MAX_STRING_ID + 1) >> 4;
 constexpr uint32_t MAX_CARD_ID = 0x0fffffffU;
@@ -26,22 +27,23 @@ struct CardDataC {
 	uint16_t setcode[SIZE_SETCODE]{};
 	uint32_t type{};
 	uint32_t level{};
-	uint32_t attribute{};
+	uint32_t from{};
 	uint32_t race{};
-	int32_t attack{};
+	int32_t atk{};
+	uint32_t move_marker{};
+	uint32_t ot{};
+	uint32_t category{};
+	//del
 	int32_t defense{};
 	uint32_t lscale{};
 	uint32_t rscale{};
-	uint32_t link_marker{};
-	uint32_t ot{};
-	uint32_t category{};
 
 	bool is_setcodes(const std::vector<unsigned int>& values) const {
 		for (auto& value : values) {
 			for (const auto& x : setcode) {
-				if(!x)
+				if (!x)
 					break;
-				if(check_setcode(x, value))
+				if (check_setcode(x, value))
 					return true;
 			}
 		}

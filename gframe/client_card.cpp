@@ -56,7 +56,7 @@ void ClientCard::UpdateInfo(unsigned char* buf) {
 	}
 	if(flag & QUERY_POSITION) {
 		int pdata = (BufferIO::Read<int32_t>(buf) >> 24) & 0xff;
-		if((location & (LOCATION_EXTRA | LOCATION_REMOVED)) && pdata != position) {
+		if((location & (LOCATION_ADECK | LOCATION_VOID)) && pdata != position) {
 			position = pdata;
 			mainGame->dField.MoveCard(this, 1);
 		} else
@@ -220,7 +220,7 @@ bool ClientCard::client_card_sort(ClientCard* c1, ClientCard* c2) {
 		return cp1 < cp2;
 	if(c1->location != c2->location)
 		return c1->location < c2->location;
-	if (c1->location == LOCATION_OVERLAY) {
+	if (c1->location == LOCATION_GENE) {
 		if (c1->overlayTarget != c2->overlayTarget)
 			return c1->overlayTarget->sequence < c2->overlayTarget->sequence;
 		else
@@ -229,7 +229,7 @@ bool ClientCard::client_card_sort(ClientCard* c1, ClientCard* c2) {
 	else if (c1->location == LOCATION_DECK) {
 		return c1->sequence > c2->sequence;
 	}
-	else if (c1->location & (LOCATION_GRAVE | LOCATION_REMOVED | LOCATION_EXTRA)) {
+	else if (c1->location & (LOCATION_DROP | LOCATION_VOID | LOCATION_ADECK)) {
 		auto it1 = std::find_if(mainGame->dField.chains.rbegin(), mainGame->dField.chains.rend(), [c1](const ChainInfo& ch) {
 			return c1 == ch.chain_card || ch.target.find(c1) != ch.target.end();
 		});

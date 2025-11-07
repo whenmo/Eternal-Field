@@ -451,9 +451,9 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 		}
 	};
 	load(pdeck[0].main, 0, LOCATION_DECK);
-	load(pdeck[0].extra, 0, LOCATION_EXTRA);
+	load(pdeck[0].extra, 0, LOCATION_ADECK);
 	load(pdeck[1].main, 1, LOCATION_DECK);
-	load(pdeck[1].extra, 1, LOCATION_EXTRA);
+	load(pdeck[1].extra, 1, LOCATION_ADECK);
 	last_replay.Flush();
 	unsigned char startbuf[32]{};
 	auto pbuf = startbuf;
@@ -463,9 +463,9 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	BufferIO::Write<int32_t>(pbuf, host_info.start_lp);
 	BufferIO::Write<int32_t>(pbuf, host_info.start_lp);
 	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 0, LOCATION_DECK));
-	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 0, LOCATION_EXTRA));
+	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 0, LOCATION_ADECK));
 	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 1, LOCATION_DECK));
-	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 1, LOCATION_EXTRA));
+	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 1, LOCATION_ADECK));
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 	startbuf[1] = 1;
 	NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
@@ -763,7 +763,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, offset, pbuf - offset);
 			return 1;
 		}
-		case MSG_SELECT_POSITION: {
+		case MSG_SELECT_FACE: {
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 5;
 			WaitforResponse(player);
@@ -959,12 +959,12 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			int cp = pbuf[11];
 			pbuf += 16;
 			NetServer::SendBufferToPlayer(players[cc], STOC_GAME_MSG, offset, pbuf - offset);
-			if (!(cl & (LOCATION_GRAVE + LOCATION_OVERLAY)) && ((cl & (LOCATION_DECK + LOCATION_HAND)) || (cp & POS_FACEDOWN)))
+			if (!(cl & (LOCATION_DROP + LOCATION_GENE)) && ((cl & (LOCATION_DECK + LOCATION_HAND)) || (cp & FACE_DOWN)))
 				BufferIO::Write<int32_t>(pbufw, 0);
 			NetServer::SendBufferToPlayer(players[1 - cc], STOC_GAME_MSG, offset, pbuf - offset);
 			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 				NetServer::ReSendToPlayer(*oit);
-			if (cl != 0 && (cl & LOCATION_OVERLAY) == 0 && (cl != pl || pc != cc))
+			if (cl != 0 && (cl & LOCATION_GENE) == 0 && (cl != pl || pc != cc))
 				RefreshSingle(cc, cl, cs);
 			break;
 		}
@@ -979,7 +979,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			NetServer::ReSendToPlayer(players[1]);
 			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 				NetServer::ReSendToPlayer(*oit);
-			if((pp & POS_FACEDOWN) && (cp & POS_FACEUP))
+			if((pp & FACE_DOWN) && (cp & FACE_UP))
 				RefreshSingle(cc, cl, cs);
 			break;
 		}
@@ -1043,7 +1043,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			int cp = pbuf[7];
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[cc], STOC_GAME_MSG, offset, pbuf - offset);
-			if (cp & POS_FACEDOWN)
+			if (cp & FACE_DOWN)
 				BufferIO::Write<int32_t>(pbufw, 0);
 			NetServer::SendBufferToPlayer(players[1 - cc], STOC_GAME_MSG, offset, pbuf - offset);
 			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
@@ -1488,7 +1488,7 @@ void SingleDuel::RefreshMzone(int player, int flag, int use_cache) {
 		if (clen <= LEN_HEADER)
 			continue;
 		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
+		if (position & FACE_DOWN)
 			std::memset(qbuf, 0, clen - 4);
 		qbuf += clen - 4;
 	}
@@ -1500,7 +1500,7 @@ void SingleDuel::RefreshSzone(int player, int flag, int use_cache) {
 	std::vector<unsigned char> query_buffer;
 	query_buffer.resize(SIZE_QUERY_BUFFER);
 	auto qbuf = query_buffer.data();
-	auto len = WriteUpdateData(player, LOCATION_SZONE, flag, qbuf, use_cache);
+	auto len = WriteUpdateData(player, LOCATION_CALL, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
 	int qlen = 0;
 	while(qlen < len) {
@@ -1509,7 +1509,7 @@ void SingleDuel::RefreshSzone(int player, int flag, int use_cache) {
 		if (clen <= LEN_HEADER)
 			continue;
 		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
+		if (position & FACE_DOWN)
 			std::memset(qbuf, 0, clen - 4);
 		qbuf += clen - 4;
 	}
@@ -1530,7 +1530,7 @@ void SingleDuel::RefreshHand(int player, int flag, int use_cache) {
 		if (slen <= LEN_HEADER)
 			continue;
 		auto position = GetPosition(qbuf, 8);
-		if(!(position & POS_FACEUP))
+		if(!(position & FACE_UP))
 			std::memset(qbuf, 0, slen - 4);
 		qbuf += slen - 4;
 	}
@@ -1542,7 +1542,7 @@ void SingleDuel::RefreshGrave(int player, int flag, int use_cache) {
 	std::vector<unsigned char> query_buffer;
 	query_buffer.resize(SIZE_QUERY_BUFFER);
 	auto qbuf = query_buffer.data();
-	auto len = WriteUpdateData(player, LOCATION_GRAVE, flag, qbuf, use_cache);
+	auto len = WriteUpdateData(player, LOCATION_DROP, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
 	NetServer::ReSendToPlayer(players[1]);
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
@@ -1552,7 +1552,7 @@ void SingleDuel::RefreshExtra(int player, int flag, int use_cache) {
 	std::vector<unsigned char> query_buffer;
 	query_buffer.resize(SIZE_QUERY_BUFFER);
 	auto qbuf = query_buffer.data();
-	auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
+	auto len = WriteUpdateData(player, LOCATION_ADECK, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
 }
 void SingleDuel::RefreshSingle(int player, int location, int sequence, int flag) {
@@ -1569,7 +1569,7 @@ void SingleDuel::RefreshSingle(int player, int location, int sequence, int flag)
 		return;
 	const int clen = BufferIO::Read<int32_t>(qbuf);
 	auto position = GetPosition(qbuf, 8);
-	if (position & POS_FACEDOWN) {
+	if (position & FACE_DOWN) {
 		BufferIO::Write<int32_t>(qbuf, QUERY_CODE);
 		BufferIO::Write<int32_t>(qbuf, 0);
 		std::memset(qbuf, 0, clen - 12);

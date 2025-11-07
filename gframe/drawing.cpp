@@ -91,9 +91,9 @@ void Game::DrawBackGround() {
 	if(gameConf.draw_field_spell) {
 		int fieldcode1 = -1;
 		int fieldcode2 = -1;
-		if(dField.szone[0][5] && dField.szone[0][5]->position & POS_FACEUP)
+		if(dField.szone[0][5] && dField.szone[0][5]->position & FACE_UP)
 			fieldcode1 = dField.szone[0][5]->code;
-		if(dField.szone[1][5] && dField.szone[1][5]->position & POS_FACEUP)
+		if(dField.szone[1][5] && dField.szone[1][5]->position & FACE_UP)
 			fieldcode2 = dField.szone[1][5]->code;
 		int fieldcode = (fieldcode1 > 0) ? fieldcode1 : fieldcode2;
 		if(fieldcode1 > 0 && fieldcode2 > 0 && fieldcode1 != fieldcode2) {
@@ -184,7 +184,7 @@ void Game::DrawBackGround() {
 	//current sel
 	if (dField.hovered_location != 0 && dField.hovered_location != 2 && dField.hovered_location != POSITION_HINT
 		&& !(dInfo.duel_rule < 4 && dField.hovered_location == LOCATION_MZONE && dField.hovered_sequence > 4)
-		&& !(dInfo.duel_rule >= 4 && dField.hovered_location == LOCATION_SZONE && dField.hovered_sequence > 5)) {
+		&& !(dInfo.duel_rule >= 4 && dField.hovered_location == LOCATION_CALL && dField.hovered_sequence > 5)) {
 		irr::video::S3DVertex* vertex = 0;
 		if (dField.hovered_location == LOCATION_DECK)
 			vertex = matManager.vFieldDeck[dField.hovered_controler];
@@ -194,13 +194,13 @@ void Game::DrawBackGround() {
 			if(pcard && pcard->type & TYPE_LINK) {
 				DrawLinkedZones(pcard);
 			}
-		} else if (dField.hovered_location == LOCATION_SZONE)
+		} else if (dField.hovered_location == LOCATION_CALL)
 			vertex = matManager.vFieldSzone[dField.hovered_controler][dField.hovered_sequence][rule];
-		else if (dField.hovered_location == LOCATION_GRAVE)
+		else if (dField.hovered_location == LOCATION_DROP)
 			vertex = matManager.vFieldGrave[dField.hovered_controler][rule];
-		else if (dField.hovered_location == LOCATION_REMOVED)
+		else if (dField.hovered_location == LOCATION_VOID)
 			vertex = matManager.vFieldRemove[dField.hovered_controler][rule];
-		else if (dField.hovered_location == LOCATION_EXTRA)
+		else if (dField.hovered_location == LOCATION_ADECK)
 			vertex = matManager.vFieldExtra[dField.hovered_controler];
 		selFieldAlpha += selFieldDAlpha;
 		if (selFieldAlpha <= 5) {
@@ -372,14 +372,14 @@ void Game::DrawCard(ClientCard* pcard) {
 		return;
 	if(pcard->is_selectable && (pcard->location & 0xe)) {
 		float cv[4] = {1.0f, 1.0f, 0.0f, 1.0f};
-		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & POS_FACEUP)))
+		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & FACE_UP)))
 			DrawSelectionLine(matManager.vCardOutline, !pcard->is_selected, 2, cv);
 		else
 			DrawSelectionLine(matManager.vCardOutliner, !pcard->is_selected, 2, cv);
 	}
 	if(pcard->is_highlighting) {
 		float cv[4] = {0.0f, 1.0f, 1.0f, 1.0f};
-		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & POS_FACEUP)))
+		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & FACE_UP)))
 			DrawSelectionLine(matManager.vCardOutline, true, 2, cv);
 		else
 			DrawSelectionLine(matManager.vCardOutliner, true, 2, cv);
@@ -400,7 +400,7 @@ void Game::DrawCard(ClientCard* pcard) {
 		driver->setMaterial(matManager.mTexture);
 		driver->drawVertexPrimitiveList(matManager.vSymbol, 4, matManager.iRectangle, 2);
 	} else if((pcard->status & (STATUS_DISABLED | STATUS_FORBIDDEN))
-		&& (pcard->location & LOCATION_ONFIELD) && (pcard->position & POS_FACEUP)) {
+		&& (pcard->location & LOCATION_FIELD) && (pcard->position & FACE_UP)) {
 		matManager.mTexture.setTexture(0, imageManager.tNegated);
 		driver->setMaterial(matManager.mTexture);
 		driver->drawVertexPrimitiveList(matManager.vNegate, 4, matManager.iRectangle, 2);
@@ -613,14 +613,14 @@ void Game::DrawMisc() {
 		DrawStatus(pcard, 743, 338, 712, 291);
 	for(int i = 0; i < 5; ++i) {
 		pcard = dField.mzone[1][i];
-		if(pcard && (pcard->position & POS_FACEUP))
+		if(pcard && (pcard->position & FACE_UP))
 			DrawStatus(pcard, 803 - i * 68, 235, 779 - i * 71, 272);
 	}
 	pcard = dField.mzone[1][5];
-	if(pcard && (pcard->position & POS_FACEUP))
+	if(pcard && (pcard->position & FACE_UP))
 		DrawStatus(pcard, 739, 291, 710, 338);
 	pcard = dField.mzone[1][6];
-	if(pcard && (pcard->position & POS_FACEUP))
+	if(pcard && (pcard->position & FACE_UP))
 		DrawStatus(pcard, 593, 291, 555, 338);
 	if(dInfo.duel_rule < 4) {
 		pcard = dField.szone[0][6];
@@ -743,9 +743,9 @@ void Game::DrawGUI() {
 					fu.fadingFrame--;
 					if(!fu.fadingFrame) {
 						fu.guiFading->setRelativePosition(fu.fadingSize);
-						if(fu.guiFading == wPosSelect) {
-							btnPSAU->setDrawImage(true);
-							btnPSAD->setDrawImage(true);
+						if(fu.guiFading == wFaceSelect) {
+							btnFU->setDrawImage(true);
+							btnFD->setDrawImage(true);
 							btnPSDU->setDrawImage(true);
 							btnPSDD->setDrawImage(true);
 						}
@@ -774,9 +774,9 @@ void Game::DrawGUI() {
 					if(!fu.fadingFrame) {
 						fu.guiFading->setVisible(false);
 						fu.guiFading->setRelativePosition(fu.fadingSize);
-						if(fu.guiFading == wPosSelect) {
-							btnPSAU->setDrawImage(true);
-							btnPSAD->setDrawImage(true);
+						if(fu.guiFading == wFaceSelect) {
+							btnFU->setDrawImage(true);
+							btnFD->setDrawImage(true);
 							btnPSDU->setDrawImage(true);
 							btnPSDD->setDrawImage(true);
 						}
@@ -1051,9 +1051,9 @@ void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	fu.fadingFrame = 10;
 	fu.autoFadeoutFrame = autoframe;
 	fu.signalAction = 0;
-	if(win == wPosSelect) {
-		btnPSAU->setDrawImage(false);
-		btnPSAD->setDrawImage(false);
+	if(win == wFaceSelect) {
+		btnFU->setDrawImage(false);
+		btnFD->setDrawImage(false);
 		btnPSDU->setDrawImage(false);
 		btnPSDD->setDrawImage(false);
 	}
@@ -1086,9 +1086,9 @@ void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
 	fu.fadingFrame = 10;
 	fu.autoFadeoutFrame = 0;
 	fu.signalAction = set_action;
-	if(win == wPosSelect) {
-		btnPSAU->setDrawImage(false);
-		btnPSAD->setDrawImage(false);
+	if(win == wFaceSelect) {
+		btnFU->setDrawImage(false);
+		btnFD->setDrawImage(false);
 		btnPSDU->setDrawImage(false);
 		btnPSDD->setDrawImage(false);
 	}
@@ -1282,7 +1282,7 @@ void Game::DrawDeckBd() {
 			availBuffer = L" [TCG]";
 		else if ((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
 			availBuffer = L" [Custom]";
-		if(ptr->second.type & TYPE_MONSTER) {
+		if(ptr->second.type & TYPE_MONS) {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
 			DrawShadowText(textFont, textBuffer, Resize(860, 165 + i * 66, 955, 185 + i * 66), Resize(1, 1, 0, 0));
 			const wchar_t* form = L"\u2605";
@@ -1291,22 +1291,22 @@ void Game::DrawDeckBd() {
 			if(!(ptr->second.type & TYPE_LINK)) {
 				if(ptr->second.type & TYPE_XYZ)
 					form = L"\u2606";
-				if(ptr->second.attack < 0 && ptr->second.defense < 0)
+				if(ptr->second.atk < 0 && ptr->second.defense < 0)
 					myswprintf(adBuffer, L"?/?");
-				else if(ptr->second.attack < 0)
+				else if(ptr->second.atk < 0)
 					myswprintf(adBuffer, L"?/%d", ptr->second.defense);
 				else if(ptr->second.defense < 0)
-					myswprintf(adBuffer, L"%d/?", ptr->second.attack);
+					myswprintf(adBuffer, L"%d/?", ptr->second.atk);
 				else
-					myswprintf(adBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
+					myswprintf(adBuffer, L"%d/%d", ptr->second.atk, ptr->second.defense);
 			} else {
 				form = L"LINK-";
-				if(ptr->second.attack < 0)
+				if(ptr->second.atk < 0)
 					myswprintf(adBuffer, L"?/-");
 				else
-					myswprintf(adBuffer, L"%d/-", ptr->second.attack);
+					myswprintf(adBuffer, L"%d/-", ptr->second.atk);
 			}
-			const auto& attribute = dataManager.FormatAttribute(ptr->second.attribute);
+			const auto& attribute = dataManager.FormatAttribute(ptr->second.from);
 			const auto& race = dataManager.FormatRace(ptr->second.race);
 			myswprintf(textBuffer, L"%ls/%ls %ls%d", attribute.c_str(), race.c_str(), form, ptr->second.level);
 			DrawShadowText(textFont, textBuffer, Resize(860, 187 + i * 66, 955, 207 + i * 66), Resize(1, 1, 0, 0));

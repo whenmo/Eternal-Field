@@ -318,7 +318,7 @@ bool SingleMode::SinglePlayAnalyze(unsigned char* msg, unsigned int len) {
 			}
 			break;
 		}
-		case MSG_SELECT_POSITION: {
+		case MSG_SELECT_FACE: {
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 5;
 			if(!DuelClient::ClientAnalyze(offset, pbuf - offset)) {
@@ -455,7 +455,7 @@ bool SingleMode::SinglePlayAnalyze(unsigned char* msg, unsigned int len) {
 			/*int cp = pbuf[11];*/
 			pbuf += 16;
 			DuelClient::ClientAnalyze(offset, pbuf - offset);
-			if(cl && !(cl & LOCATION_OVERLAY) && (pl != cl || pc != cc))
+			if(cl && !(cl & LOCATION_GENE) && (pl != cl || pc != cc))
 				SinglePlayRefreshSingle(cc, cl, cs);
 			break;
 		}
@@ -795,8 +795,8 @@ void SingleMode::SinglePlayRefresh(int flag) {
 	queryBuffer.resize(SIZE_QUERY_BUFFER);
 	ReloadLocation(0, LOCATION_MZONE, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_MZONE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_SZONE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_SZONE, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_CALL, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_CALL, flag, queryBuffer);
 	ReloadLocation(0, LOCATION_HAND, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_HAND, flag, queryBuffer);
 }
@@ -809,13 +809,13 @@ inline void SingleMode::SinglePlayRefreshHand(int player, int flag) {
 	SingleRefreshLocation(player, LOCATION_HAND, flag);
 }
 inline void SingleMode::SinglePlayRefreshGrave(int player, int flag) {
-	SingleRefreshLocation(player, LOCATION_GRAVE, flag);
+	SingleRefreshLocation(player, LOCATION_DROP, flag);
 }
 inline void SingleMode::SinglePlayRefreshDeck(int player, int flag) {
 	SingleRefreshLocation(player, LOCATION_DECK, flag);
 }
 inline void SingleMode::SinglePlayRefreshExtra(int player, int flag) {
-	SingleRefreshLocation(player, LOCATION_EXTRA, flag);
+	SingleRefreshLocation(player, LOCATION_ADECK, flag);
 }
 void SingleMode::SinglePlayRefreshSingle(int player, int location, int sequence, int flag) {
 	unsigned char queryBuffer[0x1000];
@@ -828,19 +828,19 @@ void SingleMode::SinglePlayReload() {
 	unsigned int flag = 0xffdfff;
 	ReloadLocation(0, LOCATION_MZONE, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_MZONE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_SZONE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_SZONE, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_CALL, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_CALL, flag, queryBuffer);
 	ReloadLocation(0, LOCATION_HAND, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_HAND, flag, queryBuffer);
 
 	ReloadLocation(0, LOCATION_DECK, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_DECK, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_EXTRA, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_EXTRA, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_GRAVE, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_GRAVE, flag, queryBuffer);
-	ReloadLocation(0, LOCATION_REMOVED, flag, queryBuffer);
-	ReloadLocation(1, LOCATION_REMOVED, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_ADECK, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_ADECK, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_DROP, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_DROP, flag, queryBuffer);
+	ReloadLocation(0, LOCATION_VOID, flag, queryBuffer);
+	ReloadLocation(1, LOCATION_VOID, flag, queryBuffer);
 }
 uint32_t SingleMode::MessageHandler(intptr_t fduel, uint32_t type) {
 	if(!enable_log)
