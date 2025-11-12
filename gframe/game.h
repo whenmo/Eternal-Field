@@ -328,7 +328,7 @@ public:
 	irr::gui::IGUITabControl* wInfos;
 	irr::gui::IGUIStaticText* stName;
 	irr::gui::IGUIStaticText* stInfo;
-	irr::gui::IGUIStaticText* stDataInfo;
+	irr::gui::IGUIStaticText* stMonsInfo;
 	irr::gui::IGUIStaticText* stSetName;
 	irr::gui::IGUIStaticText* stText;
 	irr::gui::IGUIScrollBar* scrCardText;

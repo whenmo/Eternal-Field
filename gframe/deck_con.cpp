@@ -908,7 +908,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->ebStar->setText(L"");
 				mainGame->ebScale->setText(L"");
 				switch(mainGame->cbCardType->getSelected()) {
-				case 0: {
+				case 0: { // N/A
 					mainGame->cbCardType2->setEnabled(false);
 					mainGame->cbCardType2->setSelected(0);
 					mainGame->cbRace->setEnabled(false);
@@ -919,7 +919,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->ebScale->setEnabled(false);
 					break;
 				}
-				case 1: {
+				case 1: { // mons
 					wchar_t normaltuner[32];
 					wchar_t normalpen[32];
 					wchar_t syntuner[32];
@@ -932,6 +932,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->ebScale->setEnabled(true);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
+					/*
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_MONS + TYPE_NORMAL);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1055), TYPE_MONS + TYPE_EFFECT);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1056), TYPE_MONS + TYPE_FUSION);
@@ -953,9 +954,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1059), TYPE_MONS + TYPE_SPIRIT);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1071), TYPE_MONS + TYPE_FLIP);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1072), TYPE_MONS + TYPE_TOON);
+					*/
 					break;
 				}
-				case 2: {
+				case 2: { // call
 					mainGame->cbCardType2->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbAttribute->setEnabled(false);
@@ -966,14 +968,16 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_CALL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_QUICKPLAY);
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_FAST);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_CALL + TYPE_CONTINUOUS);
+					//mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_CALL + TYPE_EQUIP);
+					/*
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_CALL + TYPE_RITUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_CALL + TYPE_EQUIP);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1069), TYPE_CALL + TYPE_FIELD);
+					*/
 					break;
 				}
-				case 3: {
+				case 3: { // bane
 					mainGame->cbCardType2->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbAttribute->setEnabled(false);
@@ -986,6 +990,18 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_BANE);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_BANE + TYPE_CONTINUOUS);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1070), TYPE_BANE + TYPE_COUNTER);
+					break;
+				}
+				case 4: { // area
+					mainGame->cbCardType2->setEnabled(true);
+					mainGame->cbRace->setEnabled(false);
+					mainGame->cbAttribute->setEnabled(false);
+					mainGame->ebAttack->setEnabled(false);
+					mainGame->ebDefense->setEnabled(false);
+					mainGame->ebStar->setEnabled(false);
+					mainGame->ebScale->setEnabled(false);
+					mainGame->cbCardType2->clear();
+					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
 					break;
 				}
 				}
@@ -1544,13 +1560,7 @@ void DeckBuilder::FilterCards() {
 				continue;
 			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
 				continue;
-			if(filter_lm == 5 && !(data.ot & AVAIL_TCG))
-				continue;
-			if(filter_lm == 6 && !(data.ot & AVAIL_SC))
-				continue;
-			if(filter_lm == 7 && !(data.ot & AVAIL_CUSTOM))
-				continue;
-			if(filter_lm == 8 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+			if(filter_lm == 5 && !(data.ot & AVAIL_CUSTOM))
 				continue;
 		}
 		bool is_target = true;

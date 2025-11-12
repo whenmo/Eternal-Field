@@ -103,7 +103,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
-		if (cit->second.type & (TYPES_EXTRA_DECK | TYPE_TOKEN))
+		if (cit->second.type & (TYPE_AREA | TYPE_TOKEN))
 			return (DECKERROR_MAINCOUNT << 28);
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
@@ -118,7 +118,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
-		if (!(cit->second.type & TYPES_EXTRA_DECK) || cit->second.type & TYPE_TOKEN)
+		if (!(cit->second.type & TYPE_AREA) || cit->second.type & TYPE_TOKEN)
 			return (DECKERROR_EXTRACOUNT << 28);
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
@@ -166,7 +166,7 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			deck.main.push_back(it);
 			continue;
 		}
-		if (cd.type & TYPES_EXTRA_DECK) {
+		if (cd.type & TYPE_AREA) {
 			if (deck.extra.size() < EXTRA_MAX_SIZE)
 				deck.extra.push_back(it);
 		}

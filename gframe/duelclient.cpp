@@ -1127,7 +1127,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			break;
 		}
 		case HINT_ATTRIB: {
-			const auto& attribute = dataManager.FormatAttribute(data);
+			const auto& attribute = dataManager.FormatFrom(data);
 			myswprintf(textBuffer, dataManager.GetSysString(1511), attribute.c_str());
 			mainGame->AddLog(textBuffer);
 			mainGame->gMutex.lock();

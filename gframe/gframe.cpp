@@ -114,9 +114,8 @@ int main(int argc, char* argv[]) {
 		}
 		if(!std::wcscmp(wargv[i], L"-e")) { // extra database
 			++i;
-			if(i < wargc) {
+			if(i < wargc)
 				ygo::dataManager.LoadDB(wargv[i]);
-			}
 			continue;
 		} else if(!std::wcscmp(wargv[i], L"-n")) { // nickName
 			++i;

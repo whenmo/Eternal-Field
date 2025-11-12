@@ -13,19 +13,20 @@ DataManager::DataManager() : _datas(32768), _strings(32768) {
 		{55088578u, {0x8f, 0x54, 0x59, 0x82, 0x13a}},
 	};
 }
-bool DataManager::ReadDB(sqlite3* pDB) {
+bool DataManager::ReadDB(sqlite3* pDB, bool is_diy) {
 	sqlite3_stmt* pStmt = nullptr;
 	const char* sql = "select * from datas,texts where datas.id=texts.id";
 	if (sqlite3_prepare_v2(pDB, sql, -1, &pStmt, nullptr) != SQLITE_OK)
 		return Error(pDB, pStmt);
 	wchar_t strBuffer[4096];
+	uint32_t ot = is_diy ? AVAIL_CUSTOM : AVAIL_OCG;
 	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
 		if (step != SQLITE_ROW)
 			return Error(pDB, pStmt);
 		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
 		auto& cd = _datas[code];
 		cd.code = code;
-		cd.ot = sqlite3_column_int(pStmt, 1);
+		cd.ot = ot;
 		cd.alias = sqlite3_column_int(pStmt, 2);
 		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
 		write_setcode(cd.setcode, setcode);
@@ -95,8 +96,10 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 	bool ret{};
 	if (spmemvfs_open_db(&db, file, mem) != SQLITE_OK)
 		ret = Error(db.handle);
-	else
-		ret = ReadDB(db.handle);
+	else {
+		bool is_diy = std::wcscmp(wfile, L"cards.cdb") != 0;
+		ret = ReadDB(db.handle, is_diy);
+	}
 	spmemvfs_close_db(&db);
 	spmemvfs_env_fini();
 	return ret;
@@ -292,13 +295,13 @@ const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
 	else
 		return unknown_string;
 }
-std::wstring DataManager::FormatAttribute(unsigned int attribute) const {
+std::wstring DataManager::FormatFrom(unsigned int from) const {
 	std::wstring buffer;
 	for (int i = 0; i < FROM_COUNT; ++i) {
-		if (attribute & (0x1U << i)) {
+		if (from & (0x1U << i)) {
 			if (!buffer.empty())
 				buffer.push_back(L'|');
-			buffer.append(GetSysString(STRING_ID_ATTRIBUTE + i));
+			buffer.append(GetSysString(STRING_ID_FROM + i));
 		}
 	}
 	if (buffer.empty())
@@ -345,23 +348,23 @@ std::wstring DataManager::FormatSetName(const uint16_t setcode[]) const {
 		return std::wstring(unknown_string);
 	return buffer;
 }
-std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
+std::wstring DataManager::FormatMoveMarker(unsigned int move_marker) const {
 	std::wstring buffer;
-	if (link_marker & LINK_MARKER_TOP_LEFT)
+	if (move_marker & MOVE_MARKER_TOP_LEFT)
 		buffer.append(L"[\u2196]");
-	if (link_marker & LINK_MARKER_TOP)
+	if (move_marker & MOVE_MARKER_TOP)
 		buffer.append(L"[\u2191]");
-	if (link_marker & LINK_MARKER_TOP_RIGHT)
+	if (move_marker & MOVE_MARKER_TOP_RIGHT)
 		buffer.append(L"[\u2197]");
-	if (link_marker & LINK_MARKER_LEFT)
+	if (move_marker & MOVE_MARKER_LEFT)
 		buffer.append(L"[\u2190]");
-	if (link_marker & LINK_MARKER_RIGHT)
+	if (move_marker & MOVE_MARKER_RIGHT)
 		buffer.append(L"[\u2192]");
-	if (link_marker & LINK_MARKER_BOTTOM_LEFT)
+	if (move_marker & MOVE_MARKER_BOTTOM_LEFT)
 		buffer.append(L"[\u2199]");
-	if (link_marker & LINK_MARKER_BOTTOM)
+	if (move_marker & MOVE_MARKER_BOTTOM)
 		buffer.append(L"[\u2193]");
-	if (link_marker & LINK_MARKER_BOTTOM_RIGHT)
+	if (move_marker & MOVE_MARKER_BOTTOM_RIGHT)
 		buffer.append(L"[\u2198]");
 	return buffer;
 }

@@ -343,8 +343,8 @@ bool Game::Initialize() {
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stInfo = env->addStaticText(L"", irr::core::rect<irr::s32>(15, 37, 296, 60), false, true, tabInfo, -1, false);
 	stInfo->setOverrideColor(irr::video::SColor(255, 0, 0, 255));
-	stDataInfo = env->addStaticText(L"", irr::core::rect<irr::s32>(15, 60, 296, 83), false, true, tabInfo, -1, false);
-	stDataInfo->setOverrideColor(irr::video::SColor(255, 0, 0, 255));
+	stMonsInfo = env->addStaticText(L"", irr::core::rect<irr::s32>(15, 60, 296, 83), false, true, tabInfo, -1, false);
+	stMonsInfo->setOverrideColor(irr::video::SColor(255, 0, 0, 255));
 	stSetName = env->addStaticText(L"", irr::core::rect<irr::s32>(15, 83, 296, 106), false, true, tabInfo, -1, false);
 	stSetName->setOverrideColor(irr::video::SColor(255, 0, 0, 255));
 	stText = env->addStaticText(L"", irr::core::rect<irr::s32>(15, 106, 287, 324), false, true, tabInfo, -1, false);
@@ -592,7 +592,7 @@ bool Game::Initialize() {
 	wANAttribute->setVisible(false);
 	for (int i = 0; i < FROM_COUNT; ++i)
 		chkAttribute[i] = env->addCheckBox(false, irr::core::rect<irr::s32>(10 + (i % 4) * 80, 25 + (i / 4) * 25, 90 + (i % 4) * 80, 50 + (i / 4) * 25),
-			wANAttribute, CHECK_ATTRIBUTE, dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i));
+			wANAttribute, CHECK_ATTRIBUTE, dataManager.GetSysString(DataManager::STRING_ID_FROM + i));
 	//announce race
 	wANRace = env->addWindow(irr::core::rect<irr::s32>(480, 200, 850, 410), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
@@ -724,16 +724,16 @@ bool Game::Initialize() {
 	cbLimit->addItem(dataManager.GetSysString(1317));
 	cbLimit->addItem(dataManager.GetSysString(1318));
 	cbLimit->addItem(dataManager.GetSysString(1481));
-	cbLimit->addItem(dataManager.GetSysString(1482));
-	cbLimit->addItem(dataManager.GetSysString(1483));
+	//cbLimit->addItem(dataManager.GetSysString(1482)); TCG
+	//cbLimit->addItem(dataManager.GetSysString(1483)); 簡中
 	cbLimit->addItem(dataManager.GetSysString(1484));
-	cbLimit->addItem(dataManager.GetSysString(1485));
+	//cbLimit->addItem(dataManager.GetSysString(1485)); 無獨有卡
 	stAttribute = env->addStaticText(dataManager.GetSysString(1319), irr::core::rect<irr::s32>(10, 22 + 50 / 6, 70, 42 + 50 / 6), false, false, wFilter);
 	cbAttribute = env->addComboBox(irr::core::rect<irr::s32>(60, 20 + 50 / 6, 195, 40 + 50 / 6), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
 	for (int i = 0; i < FROM_COUNT; ++i)
-		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i), 0x1U << i);
+		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_FROM + i), 0x1U << i);
 	stRace = env->addStaticText(dataManager.GetSysString(1321), irr::core::rect<irr::s32>(10, 42 + 75 / 6, 70, 62 + 75 / 6), false, false, wFilter);
 	cbRace = env->addComboBox(irr::core::rect<irr::s32>(60, 40 + 75 / 6, 195, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
@@ -1531,108 +1531,69 @@ void Game::SaveConfig() {
 	std::fclose(fp);
 }
 void Game::ShowCardInfo(int code, bool resize) {
-	if(showingcode == code && !resize)
+	if (showingcode == code && !resize)
 		return;
 	wchar_t formatBuffer[256];
 	auto& _datas = dataManager.GetDataTable();
 	auto cit = _datas.find(code);
 	bool is_valid = (cit != _datas.end());
 	imgCard->setImage(imageManager.GetTexture(code, true));
-	if (is_valid) {
-		auto& cd = cit->second;
-		if (is_alternative(cd.code,cd.alias))
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-		else
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
-	}
-	else {
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
-	}
+	// name
+	auto& cd = cit->second;
+	int cod = code;
+	if (is_valid && is_alternative(cd.code, cd.alias))
+		cod = cd.alias;
+	myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cod), cod);
 	stName->setText(formatBuffer);
-	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+	if ((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
 		stName->setToolTipText(formatBuffer);
 	else
 		stName->setToolTipText(nullptr);
+	// info
 	int offset = 0;
-	if (is_valid && !gameConf.hide_setname) {
-		auto& cd = cit->second;
-		auto target = cit;
-		if (cd.alias && _datas.find(cd.alias) != _datas.end()) {
-			target = _datas.find(cd.alias);
-		}
-		if (target->second.setcode[0]) {
-			offset = 23;// *yScale;
-			const auto& setname = dataManager.FormatSetName(target->second.setcode);
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
-			stSetName->setText(formatBuffer);
-		}
-		else
-			stSetName->setText(L"");
+	stMonsInfo->setText(L"");
+	stSetName->setText(L"");
+	if (!is_valid) {
+		myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
+		stInfo->setText(formatBuffer);
 	}
 	else {
-		stSetName->setText(L"");
-	}
-	if(is_valid && cit->second.type & TYPE_MONS) {
-		auto& cd = cit->second;
 		const auto& type = dataManager.FormatType(cd.type);
-		const auto& race = dataManager.FormatRace(cd.race);
-		const auto& attribute = dataManager.FormatAttribute(cd.from);
-		myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
+		int form_id = (cit->second.type & TYPE_AREA) ? 1336 : 1324;
+		const wchar_t* prefix_str = dataManager.GetSysString(form_id);
+		myswprintf(formatBuffer, L"[%ls] %ls%d", type.c_str(), prefix_str, cd.level);
 		stInfo->setText(formatBuffer);
-		int offset_info = 0;
-		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
-		if(dtxt.Width > (300 * xScale - 13) - 15)
-			offset_info = 15;
-		const wchar_t* form = L"\u2605";
-		wchar_t adBuffer[64]{};
-		wchar_t scaleBuffer[16]{};
-		if(!(cd.type & TYPE_LINK)) {
-			if(cd.type & TYPE_XYZ)
-				form = L"\u2606";
-			if(cd.atk < 0 && cd.defense < 0)
-				myswprintf(adBuffer, L"?/?");
-			else if(cd.atk < 0)
-				myswprintf(adBuffer, L"?/%d", cd.defense);
-			else if(cd.defense < 0)
-				myswprintf(adBuffer, L"%d/?", cd.atk);
+		// mons info
+		if (cit->second.type & TYPE_MONS) {
+			const auto& race = dataManager.FormatRace(cd.race);
+			const auto& from = dataManager.FormatFrom(cd.from);
+			wchar_t adBuffer[64]{};
+			const auto& move_marker = dataManager.FormatMoveMarker(cd.move_marker);
+			if (cd.atk < 0)
+				myswprintf(adBuffer, L"?   %ls", move_marker.c_str());
 			else
-				myswprintf(adBuffer, L"%d/%d", cd.atk, cd.defense);
-		} else {
-			form = L"LINK-";
-			const auto& link_marker = dataManager.FormatLinkMarker(cd.move_marker);
-			if(cd.atk < 0)
-				myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
-			else
-				myswprintf(adBuffer, L"%d/-   %ls", cd.atk, link_marker.c_str());
+				myswprintf(adBuffer, L"%d   %ls", cd.atk, move_marker.c_str());
+			myswprintf(formatBuffer, L"%ls/%ls %ls", race.c_str(), from.c_str(), adBuffer);
+			stMonsInfo->setText(formatBuffer);
+			offset = 23;
 		}
-		if(cd.type & TYPE_PENDULUM) {
-			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
+		// setname
+		if (!gameConf.hide_setname) {
+			auto target = cit;
+			if (cd.alias && _datas.find(cd.alias) != _datas.end())
+				target = _datas.find(cd.alias);
+			if (target->second.setcode[0]) {
+				const auto& setname = dataManager.FormatSetName(target->second.setcode);
+				myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
+				stSetName->setText(formatBuffer);
+				stSetName->setRelativePosition(irr::core::rect<irr::s32>(15, 60 + offset, 296 * xScale, 83 + offset));
+				offset += 23;
+			}
 		}
-		myswprintf(formatBuffer, L"[%ls%d] %ls%ls", form, cd.level, adBuffer, scaleBuffer);
-		stDataInfo->setText(formatBuffer);
-		int offset_arrows = offset_info;
-		dtxt = guiFont->getDimension(formatBuffer);
-		if(dtxt.Width > (300 * xScale - 13) - 15)
-			offset_arrows += 15;
-		stInfo->setRelativePosition(irr::core::rect<irr::s32>(15, 37, 300 * xScale - 13, (60 + offset_info)));
-		stDataInfo->setRelativePosition(irr::core::rect<irr::s32>(15, (60 + offset_info), 300 * xScale - 13, (83 + offset_arrows)));
-		stSetName->setRelativePosition(irr::core::rect<irr::s32>(15, (83 + offset_arrows), 296 * xScale, (83 + offset_arrows) + offset));
-		stText->setRelativePosition(irr::core::rect<irr::s32>(15, (83 + offset_arrows) + offset, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, (83 + offset_arrows) + offset, 287 * xScale, 324 * yScale));
 	}
-	else {
-		if (is_valid) {
-			const auto& type = dataManager.FormatType(cit->second.type);
-			myswprintf(formatBuffer, L"[%ls]", type.c_str());
-		}
-		else
-			myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
-		stInfo->setText(formatBuffer);
-		stDataInfo->setText(L"");
-		stSetName->setRelativePosition(irr::core::rect<irr::s32>(15, 60, 296 * xScale, 60 + offset));
-		stText->setRelativePosition(irr::core::rect<irr::s32>(15, 60 + offset, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, 60 + offset, 287 * xScale, 324 * yScale));
-	}
+	stText->setRelativePosition(irr::core::rect<irr::s32>(15, 60 + offset, 287 * xScale, 324 * yScale));
+	scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, 60 + offset, 287 * xScale, 324 * yScale));
+
 	showingcode = code;
 	showingtext = dataManager.GetText(code);
 	const auto& tsize = stText->getRelativePosition();
@@ -1643,7 +1604,7 @@ void Game::ClearCardInfo(int player) {
 	showingcode = 0;
 	stName->setText(L"");
 	stInfo->setText(L"");
-	stDataInfo->setText(L"");
+	stMonsInfo->setText(L"");
 	stSetName->setText(L"");
 	stText->setText(L"");
 	scrCardText->setVisible(false);

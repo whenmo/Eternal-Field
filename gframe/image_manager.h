@@ -50,7 +50,7 @@ public:
 	irr::video::ITexture* tTarget;
 	irr::video::ITexture* tChainTarget;
 	irr::video::ITexture* tLim;
-	irr::video::ITexture* tOT;
+	irr::video::ITexture* tdiy;
 	irr::video::ITexture* tHand[3];
 	irr::video::ITexture* tBackGround;
 	irr::video::ITexture* tBackGround_menu;
