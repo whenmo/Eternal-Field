@@ -550,17 +550,16 @@ public:
 	irr::gui::IGUIButton* btnSideSort;
 	irr::gui::IGUIButton* btnSideReload;
 	irr::gui::IGUIEditBox* ebDeckname;
-	irr::gui::IGUIStaticText* stDBCategory;
-	irr::gui::IGUIStaticText* stDeck;
-	irr::gui::IGUIStaticText* stCategory;
+	irr::gui::IGUIStaticText* stDeckType;
+	irr::gui::IGUIStaticText* stDeckList;
+	irr::gui::IGUIStaticText* stCardType;
 	irr::gui::IGUIStaticText* stLimit;
-	irr::gui::IGUIStaticText* stAttribute;
+	irr::gui::IGUIStaticText* stFrom;
 	irr::gui::IGUIStaticText* stRace;
 	irr::gui::IGUIStaticText* stAttack;
-	irr::gui::IGUIStaticText* stDefense;
-	irr::gui::IGUIStaticText* stStar;
-	irr::gui::IGUIStaticText* stSearch;
-	irr::gui::IGUIStaticText* stScale;
+	irr::gui::IGUIStaticText* stSpend;
+	irr::gui::IGUIStaticText* stLife;
+	irr::gui::IGUIStaticText* stKeyword;
 	//deck manage
 	irr::gui::IGUIWindow* wDeckManage;
 	irr::gui::IGUIListBox* lstCategories;
@@ -589,21 +588,16 @@ public:
 	irr::gui::IGUIComboBox* cbCardType;
 	irr::gui::IGUIComboBox* cbCardType2;
 	irr::gui::IGUIComboBox* cbRace;
-	irr::gui::IGUIComboBox* cbAttribute;
+	irr::gui::IGUIComboBox* cbFrom;
 	irr::gui::IGUIComboBox* cbLimit;
-	irr::gui::IGUIEditBox* ebStar;
-	irr::gui::IGUIEditBox* ebScale;
+	irr::gui::IGUIEditBox* ebSpend;
+	irr::gui::IGUIEditBox* ebLife;
 	irr::gui::IGUIEditBox* ebAttack;
-	irr::gui::IGUIEditBox* ebDefense;
-	irr::gui::IGUIEditBox* ebCardName;
-	irr::gui::IGUIButton* btnEffectFilter;
+	irr::gui::IGUIEditBox* ebKeyword;
 	irr::gui::IGUIButton* btnStartFilter;
 	irr::gui::IGUIButton* btnClearFilter;
-	irr::gui::IGUIWindow* wCategories;
-	irr::gui::IGUICheckBox* chkCategory[32];
-	irr::gui::IGUIButton* btnCategoryOK;
-	irr::gui::IGUIButton* btnMarksFilter;
-	irr::gui::IGUIWindow* wLinkMarks;
+	irr::gui::IGUIButton* btnMoveMarksFilter;
+	irr::gui::IGUIWindow* wMoveMarks;
 	irr::gui::IGUIButton* btnMark[8];
 	irr::gui::IGUIButton* btnMarksOK;
 	//sort type
@@ -805,7 +799,7 @@ extern Game* mainGame;
 #define SCROLL_FILTER				315
 #define EDITBOX_KEYWORD				316
 #define BUTTON_CLEAR_FILTER			317
-#define COMBOBOX_ATTRIBUTE			318
+#define COMBOBOX_FROM			318
 #define COMBOBOX_RACE				319
 #define COMBOBOX_LIMIT				320
 #define BUTTON_CATEGORY_OK			321
@@ -855,11 +849,12 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 
-#define AVAIL_OCG					0x1
-#define AVAIL_TCG					0x2
-#define AVAIL_CUSTOM				0x4
-#define AVAIL_SC					0x8
-#define AVAIL_OCGTCG				(AVAIL_OCG|AVAIL_TCG)
+#define RULE_OCG					0x1
+#define RULE_DIY					0x4
+// will del
+#define RULE_TCG					0x2
+#define RULE_SC						0x8
+#define RULE_OT						(RULE_OCG|RULE_TCG)
 
 #define MAX_LAYER_COUNT	6
 #endif // GAME_H

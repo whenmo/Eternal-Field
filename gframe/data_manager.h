@@ -32,13 +32,13 @@ struct CardDataC {
 	uint32_t race{};
 	int32_t atk{};
 	uint32_t move_marker{};
-	uint32_t ot{};
-	uint32_t category{};
+	uint32_t rule{};
 	//del
 	uint32_t level{};
 	int32_t defense{};
 	uint32_t lscale{};
 	uint32_t rscale{};
+	uint32_t category{};
 
 	bool is_setcodes(const std::vector<unsigned int>& values) const {
 		for (auto& value : values) {

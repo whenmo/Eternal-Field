@@ -19,14 +19,57 @@ bool DataManager::ReadDB(sqlite3* pDB, bool is_diy) {
 	if (sqlite3_prepare_v2(pDB, sql, -1, &pStmt, nullptr) != SQLITE_OK)
 		return Error(pDB, pStmt);
 	wchar_t strBuffer[4096];
-	uint32_t ot = is_diy ? AVAIL_CUSTOM : AVAIL_OCG;
+
+	// EFCG cdb
+	//datas : id,alias,setcode,type,value,atk,move,race,from
+	uint32_t rule = is_diy ? RULE_DIY : RULE_OCG;
 	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
 		if (step != SQLITE_ROW)
 			return Error(pDB, pStmt);
 		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
 		auto& cd = _datas[code];
 		cd.code = code;
-		cd.ot = ot;
+		cd.rule = rule;
+		cd.alias = sqlite3_column_int(pStmt, 1);
+		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 2));
+		write_setcode(cd.setcode, setcode);
+		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 3));
+		cd.level = sqlite3_column_int(pStmt, 4);
+		cd.atk = sqlite3_column_int(pStmt, 5);
+		cd.move_marker = sqlite3_column_int(pStmt, 6);
+		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 7));
+		cd.from = static_cast<decltype(cd.from)>(sqlite3_column_int64(pStmt, 8));
+		//will del
+		cd.defense = 0;
+		cd.lscale = 0;
+		cd.rscale = 0;
+		cd.category = 0;
+		auto& cs = _strings[code];
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, 10)) {
+			BufferIO::DecodeUTF8(text, strBuffer);
+			cs.name = strBuffer;
+		}
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, 11)) {
+			BufferIO::DecodeUTF8(text, strBuffer);
+			cs.text = strBuffer;
+		}
+		constexpr int desc_count = sizeof cs.desc / sizeof cs.desc[0];
+		for (int i = 0; i < desc_count; ++i) {
+			if (const char* text = (const char*)sqlite3_column_text(pStmt, i + 12)) {
+				BufferIO::DecodeUTF8(text, strBuffer);
+				cs.desc[i] = strBuffer;
+			}
+		}
+	}
+	// ygo cdb
+	/*
+	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
+		if (step != SQLITE_ROW)
+			return Error(pDB, pStmt);
+		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
+		auto& cd = _datas[code];
+		cd.code = code;
+		cd.rule = sqlite3_column_int(pStmt, 1);
 		cd.alias = sqlite3_column_int(pStmt, 2);
 		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
 		write_setcode(cd.setcode, setcode);
@@ -63,6 +106,7 @@ bool DataManager::ReadDB(sqlite3* pDB, bool is_diy) {
 			}
 		}
 	}
+	*/
 	sqlite3_finalize(pStmt);
 	for (const auto& entry : extra_setcode) {
 		const auto& code = entry.first;

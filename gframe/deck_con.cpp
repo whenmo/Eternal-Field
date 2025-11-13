@@ -42,7 +42,7 @@ static int parse_filter(const wchar_t* pstr, unsigned int* type) {
 
 
 static inline bool havePopupWindow() {
-	return mainGame->wQuery->isVisible() || mainGame->wCategories->isVisible() || mainGame->wLinkMarks->isVisible() || mainGame->wDeckManage->isVisible() || mainGame->wDMQuery->isVisible();
+	return mainGame->wQuery->isVisible() || mainGame->wMoveMarks->isVisible() || mainGame->wDeckManage->isVisible() || mainGame->wDMQuery->isVisible();
 }
 
 static inline void get_deck_file(wchar_t* ret) {
@@ -109,7 +109,6 @@ void DeckBuilder::Terminate() {
 	mainGame->is_building = false;
 	mainGame->ClearCardInfo();
 	mainGame->wDeckEdit->setVisible(false);
-	mainGame->wCategories->setVisible(false);
 	mainGame->wFilter->setVisible(false);
 	mainGame->wSort->setVisible(false);
 	mainGame->wCardImg->setVisible(false);
@@ -145,14 +144,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		irr::s32 id = event.GUIEvent.Caller->getID();
-		if(((mainGame->wCategories->isVisible() && id != BUTTON_CATEGORY_OK) ||
-			(mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) ||
-			(mainGame->wLinkMarks->isVisible() && id != BUTTON_MARKERS_OK) ||
+		if (((mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) ||
+			(mainGame->wMoveMarks->isVisible() && id != BUTTON_MARKERS_OK) ||
 			(mainGame->wDMQuery->isVisible() && id != BUTTON_DM_OK && id != BUTTON_DM_CANCEL) ||
 			(mainGame->wDeckManage->isVisible() && !(id >= WINDOW_DECK_MANAGE && id < COMBOBOX_LFLIST)))
 			&& event.GUIEvent.EventType != irr::gui::EGET_LISTBOX_CHANGED
 			&& event.GUIEvent.EventType != irr::gui::EGET_COMBO_BOX_CHANGED) {
-			if(mainGame->wDMQuery->isVisible())
+			if (mainGame->wDMQuery->isVisible())
 				mainGame->wDMQuery->getParent()->bringToFront(mainGame->wDMQuery);
 			break;
 		}
@@ -263,10 +261,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				Terminate();
 				break;
 			}
-			case BUTTON_EFFECT_FILTER: {
-				mainGame->PopupElement(mainGame->wCategories);
-				break;
-			}
 			case BUTTON_START_FILTER: {
 				StartFilter();
 				if(!mainGame->gameConf.separate_clear_button)
@@ -275,17 +269,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_CLEAR_FILTER: {
 				ClearSearch();
-				break;
-			}
-			case BUTTON_CATEGORY_OK: {
-				filter_effect = 0;
-				long long filter = 0x1;
-				for(int i = 0; i < 32; ++i, filter <<= 1)
-					if(mainGame->chkCategory[i]->isChecked())
-						filter_effect |= filter;
-				mainGame->btnEffectFilter->setPressed(filter_effect > 0);
-				mainGame->HideElement(mainGame->wCategories);
-				InstantSearch();
 				break;
 			}
 			case BUTTON_MANAGE_DECK: {
@@ -796,7 +779,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_MARKS_FILTER: {
-				mainGame->PopupElement(mainGame->wLinkMarks);
+				mainGame->PopupElement(mainGame->wMoveMarks);
 				break;
 			}
 			case BUTTON_MARKERS_OK: {
@@ -817,8 +800,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					filter_marks |= 0002;
 				if (mainGame->btnMark[7]->isPressed())
 					filter_marks |= 0004;
-				mainGame->HideElement(mainGame->wLinkMarks);
-				mainGame->btnMarksFilter->setPressed(filter_marks > 0);
+				mainGame->HideElement(mainGame->wMoveMarks);
+				mainGame->btnMoveMarksFilter->setPressed(filter_marks > 0);
 				InstantSearch();
 				break;
 			}
@@ -901,90 +884,57 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case COMBOBOX_MAINTYPE: {
 				mainGame->cbCardType2->setSelected(0);
-				mainGame->cbAttribute->setSelected(0);
+				mainGame->cbFrom->setSelected(0);
 				mainGame->cbRace->setSelected(0);
 				mainGame->ebAttack->setText(L"");
-				mainGame->ebDefense->setText(L"");
-				mainGame->ebStar->setText(L"");
-				mainGame->ebScale->setText(L"");
+				mainGame->ebSpend->setText(L"");
+				mainGame->ebLife->setText(L"");
 				switch(mainGame->cbCardType->getSelected()) {
 				case 0: { // N/A
 					mainGame->cbCardType2->setEnabled(false);
 					mainGame->cbCardType2->setSelected(0);
 					mainGame->cbRace->setEnabled(false);
-					mainGame->cbAttribute->setEnabled(false);
+					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebDefense->setEnabled(false);
-					mainGame->ebStar->setEnabled(false);
-					mainGame->ebScale->setEnabled(false);
+					mainGame->ebSpend->setEnabled(false);
+					mainGame->ebLife->setEnabled(false);
 					break;
 				}
 				case 1: { // mons
 					wchar_t normaltuner[32];
 					wchar_t normalpen[32];
 					wchar_t syntuner[32];
-					mainGame->cbCardType2->setEnabled(true);
+					mainGame->cbCardType2->setEnabled(false);
+					mainGame->cbCardType2->setSelected(0);
 					mainGame->cbRace->setEnabled(true);
-					mainGame->cbAttribute->setEnabled(true);
+					mainGame->cbFrom->setEnabled(true);
 					mainGame->ebAttack->setEnabled(true);
-					mainGame->ebDefense->setEnabled(true);
-					mainGame->ebStar->setEnabled(true);
-					mainGame->ebScale->setEnabled(true);
-					mainGame->cbCardType2->clear();
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					/*
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_MONS + TYPE_NORMAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1055), TYPE_MONS + TYPE_EFFECT);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1056), TYPE_MONS + TYPE_FUSION);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_MONS + TYPE_RITUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1063), TYPE_MONS + TYPE_SYNCHRO);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1073), TYPE_MONS + TYPE_XYZ);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1074), TYPE_MONS + TYPE_PENDULUM);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1076), TYPE_MONS + TYPE_LINK);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1075), TYPE_MONS + TYPE_SPSUMMON);
-					myswprintf(normaltuner, L"%ls|%ls", dataManager.GetSysString(1054), dataManager.GetSysString(1062));
-					mainGame->cbCardType2->addItem(normaltuner, TYPE_MONS + TYPE_NORMAL + TYPE_TUNER);
-					myswprintf(normalpen, L"%ls|%ls", dataManager.GetSysString(1054), dataManager.GetSysString(1074));
-					mainGame->cbCardType2->addItem(normalpen, TYPE_MONS + TYPE_NORMAL + TYPE_PENDULUM);
-					myswprintf(syntuner, L"%ls|%ls", dataManager.GetSysString(1063), dataManager.GetSysString(1062));
-					mainGame->cbCardType2->addItem(syntuner, TYPE_MONS + TYPE_SYNCHRO + TYPE_TUNER);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1062), TYPE_MONS + TYPE_TUNER);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1061), TYPE_MONS + TYPE_DUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1060), TYPE_MONS + TYPE_UNION);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1059), TYPE_MONS + TYPE_SPIRIT);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1071), TYPE_MONS + TYPE_FLIP);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1072), TYPE_MONS + TYPE_TOON);
-					*/
+					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebLife->setEnabled(false);
 					break;
 				}
 				case 2: { // call
 					mainGame->cbCardType2->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
-					mainGame->cbAttribute->setEnabled(false);
+					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebDefense->setEnabled(false);
-					mainGame->ebStar->setEnabled(false);
-					mainGame->ebScale->setEnabled(false);
+					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebLife->setEnabled(false);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_CALL);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_FAST);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_CALL + TYPE_CONTINUOUS);
 					//mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_CALL + TYPE_EQUIP);
-					/*
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1057), TYPE_CALL + TYPE_RITUAL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1069), TYPE_CALL + TYPE_FIELD);
-					*/
 					break;
 				}
 				case 3: { // bane
 					mainGame->cbCardType2->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
-					mainGame->cbAttribute->setEnabled(false);
+					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebDefense->setEnabled(false);
-					mainGame->ebStar->setEnabled(false);
-					mainGame->ebScale->setEnabled(false);
+					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebLife->setEnabled(false);
 					mainGame->cbCardType2->clear();
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
 					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_BANE);
@@ -993,15 +943,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case 4: { // area
-					mainGame->cbCardType2->setEnabled(true);
+					mainGame->cbCardType2->setEnabled(false);
+					mainGame->cbCardType2->setSelected(0);
 					mainGame->cbRace->setEnabled(false);
-					mainGame->cbAttribute->setEnabled(false);
+					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebDefense->setEnabled(false);
-					mainGame->ebStar->setEnabled(false);
-					mainGame->ebScale->setEnabled(false);
-					mainGame->cbCardType2->clear();
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
+					mainGame->ebSpend->setEnabled(false);
+					mainGame->ebLife->setEnabled(true);
 					break;
 				}
 				}
@@ -1014,20 +962,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->env->setFocus(0);
 				break;
 			}
-			case COMBOBOX_SECONDTYPE: {
-				if (mainGame->cbCardType->getSelected() == 1) {
-					if (mainGame->cbCardType2->getSelected() == 8) {
-						mainGame->ebDefense->setEnabled(false);
-						mainGame->ebDefense->setText(L"");
-					} else {
-						mainGame->ebDefense->setEnabled(true);
-					}
-				}
-				mainGame->env->setFocus(0);
-				InstantSearch();
-				break;
-			}
-			case COMBOBOX_ATTRIBUTE:
+			case COMBOBOX_SECONDTYPE:
+			case COMBOBOX_FROM:
 			case COMBOBOX_RACE:
 			case COMBOBOX_LIMIT:
 				mainGame->env->setFocus(0);
@@ -1405,13 +1341,13 @@ void DeckBuilder::StartFilter() {
 	filter_type = mainGame->cbCardType->getSelected();
 	filter_type2 = mainGame->cbCardType2->getItemData(mainGame->cbCardType2->getSelected());
 	filter_lm = mainGame->cbLimit->getSelected();
-	if(filter_type == 1) {
-		filter_attrib = mainGame->cbAttribute->getItemData(mainGame->cbAttribute->getSelected());
+	if (filter_type == 4)  // area
+		filter_life = parse_filter(mainGame->ebLife->getText(), &filter_lifetype);
+	else if (filter_type != 0) { // not area and not N/A
+		filter_from = mainGame->cbFrom->getItemData(mainGame->cbFrom->getSelected());
 		filter_race = mainGame->cbRace->getItemData(mainGame->cbRace->getSelected());
 		filter_atk = parse_filter(mainGame->ebAttack->getText(), &filter_atktype);
-		filter_def = parse_filter(mainGame->ebDefense->getText(), &filter_deftype);
-		filter_lv = parse_filter(mainGame->ebStar->getText(), &filter_lvtype);
-		filter_scl = parse_filter(mainGame->ebScale->getText(), &filter_scltype);
+		filter_spend = parse_filter(mainGame->ebSpend->getText(), &filter_spendtype);
 	}
 	FilterCards();
 }
@@ -1427,7 +1363,7 @@ void DeckBuilder::FilterCards() {
 		} type{ type_t::all };
 		bool exclude{ false };
 	};
-	const wchar_t* pstr = mainGame->ebCardName->getText();
+	const wchar_t* pstr = mainGame->ebKeyword->getText();
 	int trycode = BufferIO::GetVal(pstr);
 	std::wstring str{ pstr };
 	std::vector<element_t> query_elements;
@@ -1506,7 +1442,7 @@ void DeckBuilder::FilterCards() {
 				continue;
 			if(filter_race && data.race != filter_race)
 				continue;
-			if(filter_attrib && data.from != filter_attrib)
+			if(filter_from && data.from != filter_from)
 				continue;
 			if(filter_atktype) {
 				if((filter_atktype == 1 && data.atk != filter_atk) || (filter_atktype == 2 && data.atk < filter_atk)
@@ -1514,23 +1450,16 @@ void DeckBuilder::FilterCards() {
 				        || (filter_atktype == 5 && (data.atk >= filter_atk || data.atk < 0)) || (filter_atktype == 6 && data.atk != -2))
 					continue;
 			}
-			if(filter_deftype) {
-				if((filter_deftype == 1 && data.defense != filter_def) || (filter_deftype == 2 && data.defense < filter_def)
-				        || (filter_deftype == 3 && data.defense <= filter_def) || (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0))
-				        || (filter_deftype == 5 && (data.defense >= filter_def || data.defense < 0)) || (filter_deftype == 6 && data.defense != -2)
-				        || (data.type & TYPE_LINK))
+			if(filter_spendtype) {
+				if((filter_spendtype == 1 && data.level != filter_spend) || (filter_spendtype == 2 && data.level < filter_spend)
+				        || (filter_spendtype == 3 && data.level <= filter_spend) || (filter_spendtype == 4 && data.level > filter_spend)
+				        || (filter_spendtype == 5 && data.level >= filter_spend) || filter_spendtype == 6)
 					continue;
 			}
-			if(filter_lvtype) {
-				if((filter_lvtype == 1 && data.level != filter_lv) || (filter_lvtype == 2 && data.level < filter_lv)
-				        || (filter_lvtype == 3 && data.level <= filter_lv) || (filter_lvtype == 4 && data.level > filter_lv)
-				        || (filter_lvtype == 5 && data.level >= filter_lv) || filter_lvtype == 6)
-					continue;
-			}
-			if(filter_scltype) {
-				if((filter_scltype == 1 && data.lscale != filter_scl) || (filter_scltype == 2 && data.lscale < filter_scl)
-				        || (filter_scltype == 3 && data.lscale <= filter_scl) || (filter_scltype == 4 && (data.lscale > filter_scl))
-				        || (filter_scltype == 5 && (data.lscale >= filter_scl)) || filter_scltype == 6
+			if(filter_lifetype) {
+				if((filter_lifetype == 1 && data.lscale != filter_life) || (filter_lifetype == 2 && data.lscale < filter_life)
+				        || (filter_lifetype == 3 && data.lscale <= filter_life) || (filter_lifetype == 4 && (data.lscale > filter_life))
+				        || (filter_lifetype == 5 && (data.lscale >= filter_life)) || filter_lifetype == 6
 				        || !(data.type & TYPE_PENDULUM))
 					continue;
 			}
@@ -1551,16 +1480,14 @@ void DeckBuilder::FilterCards() {
 			break;
 		}
 		}
-		if(filter_effect && !(data.category & filter_effect))
-			continue;
 		if(filter_marks && (data.move_marker & filter_marks) != filter_marks)
 			continue;
 		if(filter_lm) {
 			if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
 				continue;
-			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
+			if(filter_lm == 4 && !(data.rule & RULE_OCG))
 				continue;
-			if(filter_lm == 5 && !(data.ot & AVAIL_CUSTOM))
+			if(filter_lm == 5 && !(data.rule & RULE_DIY))
 				continue;
 		}
 		bool is_target = true;
@@ -1601,7 +1528,7 @@ void DeckBuilder::FilterCards() {
 	SortList();
 }
 void DeckBuilder::InstantSearch() {
-	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)std::wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
+	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)std::wcslen(mainGame->ebKeyword->getText()) >= mainGame->gameConf.auto_search_limit))
 		StartFilter();
 }
 void DeckBuilder::ClearSearch() {
@@ -1609,12 +1536,11 @@ void DeckBuilder::ClearSearch() {
 	mainGame->cbCardType2->setSelected(0);
 	mainGame->cbCardType2->setEnabled(false);
 	mainGame->cbRace->setEnabled(false);
-	mainGame->cbAttribute->setEnabled(false);
+	mainGame->cbFrom->setEnabled(false);
 	mainGame->ebAttack->setEnabled(false);
-	mainGame->ebDefense->setEnabled(false);
-	mainGame->ebStar->setEnabled(false);
-	mainGame->ebScale->setEnabled(false);
-	mainGame->ebCardName->setText(L"");
+	mainGame->ebSpend->setEnabled(false);
+	mainGame->ebLife->setEnabled(false);
+	mainGame->ebKeyword->setText(L"");
 	mainGame->scrFilter->setVisible(false);
 	mainGame->scrFilter->setPos(0);
 	ClearFilter();
@@ -1622,25 +1548,17 @@ void DeckBuilder::ClearSearch() {
 	myswprintf(result_string, L"%d", 0);
 }
 void DeckBuilder::ClearFilter() {
-	mainGame->cbAttribute->setSelected(0);
+	mainGame->cbFrom->setSelected(0);
 	mainGame->cbRace->setSelected(0);
 	mainGame->cbLimit->setSelected(0);
 	mainGame->ebAttack->setText(L"");
-	mainGame->ebDefense->setText(L"");
-	mainGame->ebStar->setText(L"");
-	mainGame->ebScale->setText(L"");
-	filter_effect = 0;
-	for(int i = 0; i < 32; ++i)
-		mainGame->chkCategory[i]->setChecked(false);
-	filter_marks = 0;
-	for(int i = 0; i < 8; i++)
-		mainGame->btnMark[i]->setPressed(false);
-	mainGame->btnEffectFilter->setPressed(false);
-	mainGame->btnMarksFilter->setPressed(false);
+	mainGame->ebSpend->setText(L"");
+	mainGame->ebLife->setText(L"");
+	mainGame->btnMoveMarksFilter->setPressed(false);
 }
 void DeckBuilder::SortList() {
 	auto left = results.begin();
-	const wchar_t* pstr = mainGame->ebCardName->getText();
+	const wchar_t* pstr = mainGame->ebKeyword->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
 		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
 			std::iter_swap(left, it);

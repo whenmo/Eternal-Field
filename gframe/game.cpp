@@ -670,10 +670,10 @@ bool Game::Initialize() {
 	scrPackCards->setSmallStep(1);
 	scrPackCards->setVisible(false);
 
-	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), irr::core::rect<irr::s32>(10, 9, 100, 29), false, false, wDeckEdit);
+	stDeckType = env->addStaticText(dataManager.GetSysString(1300), irr::core::rect<irr::s32>(10, 9, 100, 29), false, false, wDeckEdit);
 	cbDBCategory = env->addComboBox(irr::core::rect<irr::s32>(80, 5, 220, 30), wDeckEdit, COMBOBOX_DBCATEGORY);
 	cbDBCategory->setMaxSelectionRows(15);
-	stDeck = env->addStaticText(dataManager.GetSysString(1301), irr::core::rect<irr::s32>(10, 39, 100, 59), false, false, wDeckEdit);
+	stDeckList = env->addStaticText(dataManager.GetSysString(1301), irr::core::rect<irr::s32>(10, 39, 100, 59), false, false, wDeckEdit);
 	cbDBDecks = env->addComboBox(irr::core::rect<irr::s32>(80, 35, 220, 60), wDeckEdit, COMBOBOX_DBDECKS);
 	cbDBDecks->setMaxSelectionRows(15);
 	btnSaveDeck = env->addButton(irr::core::rect<irr::s32>(225, 35, 290, 60), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
@@ -707,92 +707,67 @@ bool Game::Initialize() {
 	//filters
 	wFilter = env->addStaticText(L"", irr::core::rect<irr::s32>(610, 5, 1020, 130), true, false, 0, -1, true);
 	wFilter->setVisible(false);
-	stCategory = env->addStaticText(dataManager.GetSysString(1311), irr::core::rect<irr::s32>(10, 2 + 25 / 6, 70, 22 + 25 / 6), false, false, wFilter);
-	cbCardType = env->addComboBox(irr::core::rect<irr::s32>(60, 25 / 6, 120, 20 + 25 / 6), wFilter, COMBOBOX_MAINTYPE);
-	cbCardType->addItem(dataManager.GetSysString(1310));
-	cbCardType->addItem(dataManager.GetSysString(1312));
-	cbCardType->addItem(dataManager.GetSysString(1313));
-	cbCardType->addItem(dataManager.GetSysString(1314));
-	cbCardType2 = env->addComboBox(irr::core::rect<irr::s32>(125, 25 / 6, 195, 20 + 25 / 6), wFilter, COMBOBOX_SECONDTYPE);
+	stCardType = env->addStaticText(dataManager.GetSysString(1311), irr::core::rect<irr::s32>(10, 9, 70, 29), false, false, wFilter);
+	cbCardType = env->addComboBox(irr::core::rect<irr::s32>(60, 5, 120, 30), wFilter, COMBOBOX_MAINTYPE);
+	cbCardType->addItem(dataManager.GetSysString(1080));
+	cbCardType->addItem(dataManager.GetSysString(1050));
+	cbCardType->addItem(dataManager.GetSysString(1051));
+	cbCardType->addItem(dataManager.GetSysString(1052));
+	cbCardType->addItem(dataManager.GetSysString(1053));
+	cbCardType2 = env->addComboBox(irr::core::rect<irr::s32>(125, 5, 195, 30), wFilter, COMBOBOX_SECONDTYPE);
 	cbCardType2->setMaxSelectionRows(10);
-	cbCardType2->addItem(dataManager.GetSysString(1310), 0);
-	stLimit = env->addStaticText(dataManager.GetSysString(1315), irr::core::rect<irr::s32>(205, 2 + 25 / 6, 280, 22 + 25 / 6), false, false, wFilter);
-	cbLimit = env->addComboBox(irr::core::rect<irr::s32>(260, 25 / 6, 390, 20 + 25 / 6), wFilter, COMBOBOX_LIMIT);
+	cbCardType2->addItem(dataManager.GetSysString(1080), 0);
+	stLimit = env->addStaticText(dataManager.GetSysString(1315), irr::core::rect<irr::s32>(205, 9, 280, 29), false, false, wFilter);
+	cbLimit = env->addComboBox(irr::core::rect<irr::s32>(260, 5, 390, 30), wFilter, COMBOBOX_LIMIT);
 	cbLimit->setMaxSelectionRows(10);
-	cbLimit->addItem(dataManager.GetSysString(1310));
+	cbLimit->addItem(dataManager.GetSysString(1080));
 	cbLimit->addItem(dataManager.GetSysString(1316));
 	cbLimit->addItem(dataManager.GetSysString(1317));
 	cbLimit->addItem(dataManager.GetSysString(1318));
 	cbLimit->addItem(dataManager.GetSysString(1481));
-	//cbLimit->addItem(dataManager.GetSysString(1482)); TCG
-	//cbLimit->addItem(dataManager.GetSysString(1483)); 簡中
-	cbLimit->addItem(dataManager.GetSysString(1484));
-	//cbLimit->addItem(dataManager.GetSysString(1485)); 無獨有卡
-	stAttribute = env->addStaticText(dataManager.GetSysString(1319), irr::core::rect<irr::s32>(10, 22 + 50 / 6, 70, 42 + 50 / 6), false, false, wFilter);
-	cbAttribute = env->addComboBox(irr::core::rect<irr::s32>(60, 20 + 50 / 6, 195, 40 + 50 / 6), wFilter, COMBOBOX_ATTRIBUTE);
-	cbAttribute->setMaxSelectionRows(10);
-	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
+	cbLimit->addItem(dataManager.GetSysString(1482));
+	stFrom = env->addStaticText(dataManager.GetSysString(1319), irr::core::rect<irr::s32>(10, 39, 70, 59), false, false, wFilter);
+	cbFrom = env->addComboBox(irr::core::rect<irr::s32>(60, 35, 195, 60), wFilter, COMBOBOX_FROM);
+	cbFrom->setMaxSelectionRows(10);
+	cbFrom->addItem(dataManager.GetSysString(1080), 0);
 	for (int i = 0; i < FROM_COUNT; ++i)
-		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_FROM + i), 0x1U << i);
-	stRace = env->addStaticText(dataManager.GetSysString(1321), irr::core::rect<irr::s32>(10, 42 + 75 / 6, 70, 62 + 75 / 6), false, false, wFilter);
-	cbRace = env->addComboBox(irr::core::rect<irr::s32>(60, 40 + 75 / 6, 195, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
+		cbFrom->addItem(dataManager.GetSysString(DataManager::STRING_ID_FROM + i), 0x1U << i);
+	stRace = env->addStaticText(dataManager.GetSysString(1321), irr::core::rect<irr::s32>(10, 69, 70, 89), false, false, wFilter);
+	cbRace = env->addComboBox(irr::core::rect<irr::s32>(60, 65, 195, 90), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
-	cbRace->addItem(dataManager.GetSysString(1310), 0);
+	cbRace->addItem(dataManager.GetSysString(1080), 0);
 	for (int i = 0; i < RACES_COUNT; ++i)
 		cbRace->addItem(dataManager.GetSysString(DataManager::STRING_ID_RACE + i), 0x1U << i);
-	stAttack = env->addStaticText(dataManager.GetSysString(1322), irr::core::rect<irr::s32>(205, 22 + 50 / 6, 280, 42 + 50 / 6), false, false, wFilter);
-	ebAttack = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 20 + 50 / 6, 340, 40 + 50 / 6), true, wFilter, EDITBOX_INPUTS);
+	stAttack = env->addStaticText(dataManager.GetSysString(1322), irr::core::rect<irr::s32>(205, 69, 280, 89), false, false, wFilter);
+	ebAttack = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 65, 300, 90), true, wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stDefense = env->addStaticText(dataManager.GetSysString(1323), irr::core::rect<irr::s32>(205, 42 + 75 / 6, 280, 62 + 75 / 6), false, false, wFilter);
-	ebDefense = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 40 + 75 / 6, 340, 60 + 75 / 6), true, wFilter, EDITBOX_INPUTS);
-	ebDefense->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stStar = env->addStaticText(dataManager.GetSysString(1324), irr::core::rect<irr::s32>(10, 62 + 100 / 6, 80, 82 + 100 / 6), false, false, wFilter);
-	ebStar = env->addEditBox(L"", irr::core::rect<irr::s32>(60, 60 + 100 / 6, 100, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
-	ebStar->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stScale = env->addStaticText(dataManager.GetSysString(1336), irr::core::rect<irr::s32>(101, 62 + 100 / 6, 150, 82 + 100 / 6), false, false, wFilter);
-	ebScale = env->addEditBox(L"", irr::core::rect<irr::s32>(150, 60 + 100 / 6, 195, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
-	ebScale->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stSearch = env->addStaticText(dataManager.GetSysString(1325), irr::core::rect<irr::s32>(205, 62 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
-	ebCardName = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 60 + 100 / 6, 390, 80 + 100 / 6), true, wFilter, EDITBOX_KEYWORD);
-	ebCardName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnEffectFilter = env->addButton(irr::core::rect<irr::s32>(345, 20 + 50 / 6, 390, 60 + 75 / 6), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326));
-	btnStartFilter = env->addButton(irr::core::rect<irr::s32>(205, 80 + 125 / 6, 390, 100 + 125 / 6), wFilter, BUTTON_START_FILTER, dataManager.GetSysString(1327));
-	if(gameConf.separate_clear_button) {
-		btnStartFilter->setRelativePosition(irr::core::rect<irr::s32>(260, 80 + 125 / 6, 390, 100 + 125 / 6));
-		btnClearFilter = env->addButton(irr::core::rect<irr::s32>(205, 80 + 125 / 6, 255, 100 + 125 / 6), wFilter, BUTTON_CLEAR_FILTER, dataManager.GetSysString(1304));
-	}
-	wCategories = env->addWindow(irr::core::rect<irr::s32>(600, 60, 1000, 305), false, L"");
-	wCategories->getCloseButton()->setVisible(false);
-	wCategories->setDrawTitlebar(false);
-	wCategories->setDraggable(false);
-	wCategories->setVisible(false);
-	btnCategoryOK = env->addButton(irr::core::rect<irr::s32>(150, 210, 250, 235), wCategories, BUTTON_CATEGORY_OK, dataManager.GetSysString(1211));
-	int catewidth = 0;
-	for(int i = 0; i < 32; ++i) {
-		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(dataManager.GetSysString(1100 + i));
-		if((int)dtxt.Width + 40 > catewidth)
-			catewidth = dtxt.Width + 40;
-	}
-	for(int i = 0; i < 32; ++i)
-		chkCategory[i] = env->addCheckBox(false, irr::core::recti(10 + (i % 4) * catewidth, 5 + (i / 4) * 25, 10 + (i % 4 + 1) * catewidth, 5 + (i / 4 + 1) * 25), wCategories, -1, dataManager.GetSysString(1100 + i));
-	int wcatewidth = catewidth * 4 + 16;
-	wCategories->setRelativePosition(irr::core::rect<irr::s32>(1000 - wcatewidth, 60, 1000, 305));
-	btnCategoryOK->setRelativePosition(irr::core::recti(wcatewidth / 2 - 50, 210, wcatewidth / 2 + 50, 235));
-	btnMarksFilter = env->addButton(irr::core::rect<irr::s32>(60, 80 + 125 / 6, 195, 100 + 125 / 6), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374));
-	wLinkMarks = env->addWindow(irr::core::rect<irr::s32>(700, 30, 820, 150), false, L"");
-	wLinkMarks->getCloseButton()->setVisible(false);
-	wLinkMarks->setDrawTitlebar(false);
-	wLinkMarks->setDraggable(false);
-	wLinkMarks->setVisible(false);
-	btnMarksOK = env->addButton(irr::core::recti(45, 45, 75, 75), wLinkMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211));
-	btnMark[0] = env->addButton(irr::core::recti(10, 10, 40, 40), wLinkMarks, -1, L"\u2196");
-	btnMark[1] = env->addButton(irr::core::recti(45, 10, 75, 40), wLinkMarks, -1, L"\u2191");
-	btnMark[2] = env->addButton(irr::core::recti(80, 10, 110, 40), wLinkMarks, -1, L"\u2197");
-	btnMark[3] = env->addButton(irr::core::recti(10, 45, 40, 75), wLinkMarks, -1, L"\u2190");
-	btnMark[4] = env->addButton(irr::core::recti(80, 45, 110, 75), wLinkMarks, -1, L"\u2192");
-	btnMark[5] = env->addButton(irr::core::recti(10, 80, 40, 110), wLinkMarks, -1, L"\u2199");
-	btnMark[6] = env->addButton(irr::core::recti(45, 80, 75, 110), wLinkMarks, -1, L"\u2193");
-	btnMark[7] = env->addButton(irr::core::recti(80, 80, 110, 110), wLinkMarks, -1, L"\u2198");
+	stSpend = env->addStaticText(dataManager.GetSysString(1324), irr::core::rect<irr::s32>(205, 39, 350, 59), false, false, wFilter);
+	ebSpend = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 35, 300, 60), true, wFilter, EDITBOX_INPUTS);
+	ebSpend->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	stLife = env->addStaticText(dataManager.GetSysString(1336), irr::core::rect<irr::s32>(305, 39, 350, 59), false, false, wFilter);
+	ebLife = env->addEditBox(L"", irr::core::rect<irr::s32>(350, 35, 390,60), true, wFilter, EDITBOX_INPUTS);
+	ebLife->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	stKeyword = env->addStaticText(dataManager.GetSysString(1325), irr::core::rect<irr::s32>(10, 99, 280, 119), false, false, wFilter);
+	ebKeyword = env->addEditBox(L"", irr::core::rect<irr::s32>(60, 95, 195, 120), true, wFilter, EDITBOX_KEYWORD);
+	ebKeyword->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnStartFilter = env->addButton(irr::core::rect<irr::s32>(260, 95, 390, 120), wFilter, BUTTON_START_FILTER, dataManager.GetSysString(1327));
+	if (gameConf.separate_clear_button)
+		btnClearFilter = env->addButton(irr::core::rect<irr::s32>(205, 95, 255, 120), wFilter, BUTTON_CLEAR_FILTER, dataManager.GetSysString(1304));
+	btnMoveMarksFilter = env->addButton(irr::core::rect<irr::s32>(305, 65, 390, 90), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374));
+	wMoveMarks = env->addWindow(irr::core::rect<irr::s32>(900, 30, 1020, 150), false, L"");
+	wMoveMarks->getCloseButton()->setVisible(false);
+	wMoveMarks->setDrawTitlebar(false);
+	wMoveMarks->setDraggable(false);
+	wMoveMarks->setVisible(false);
+	btnMarksOK = env->addButton(irr::core::recti(45, 45, 75, 75), wMoveMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211));
+	btnMark[0] = env->addButton(irr::core::recti(10, 10, 40, 40), wMoveMarks, -1, L"\u2196");
+	btnMark[1] = env->addButton(irr::core::recti(45, 10, 75, 40), wMoveMarks, -1, L"\u2191");
+	btnMark[2] = env->addButton(irr::core::recti(80, 10, 110, 40), wMoveMarks, -1, L"\u2197");
+	btnMark[3] = env->addButton(irr::core::recti(10, 45, 40, 75), wMoveMarks, -1, L"\u2190");
+	btnMark[4] = env->addButton(irr::core::recti(80, 45, 110, 75), wMoveMarks, -1, L"\u2192");
+	btnMark[5] = env->addButton(irr::core::recti(10, 80, 40, 110), wMoveMarks, -1, L"\u2199");
+	btnMark[6] = env->addButton(irr::core::recti(45, 80, 75, 110), wMoveMarks, -1, L"\u2193");
+	btnMark[7] = env->addButton(irr::core::recti(80, 80, 110, 110), wMoveMarks, -1, L"\u2198");
 	for(int i=0;i<8;i++)
 		btnMark[i]->setIsPushButton(true);
 	//replay window
@@ -1559,21 +1534,20 @@ void Game::ShowCardInfo(int code, bool resize) {
 	}
 	else {
 		const auto& type = dataManager.FormatType(cd.type);
-		int form_id = (cit->second.type & TYPE_AREA) ? 1336 : 1324;
-		const wchar_t* prefix_str = dataManager.GetSysString(form_id);
-		myswprintf(formatBuffer, L"[%ls] %ls%d", type.c_str(), prefix_str, cd.level);
+		const wchar_t* prefix_value = (cd.type & TYPE_AREA) ? L"LP" : L"\u00A4";
+		myswprintf(formatBuffer, L"[%ls] %ls %d", type.c_str(), prefix_value, cd.level);
 		stInfo->setText(formatBuffer);
 		// mons info
-		if (cit->second.type & TYPE_MONS) {
-			const auto& race = dataManager.FormatRace(cd.race);
+		if (cd.type & TYPE_MONS) {
 			const auto& from = dataManager.FormatFrom(cd.from);
+			const auto& race = dataManager.FormatRace(cd.race);
 			wchar_t adBuffer[64]{};
 			const auto& move_marker = dataManager.FormatMoveMarker(cd.move_marker);
 			if (cd.atk < 0)
-				myswprintf(adBuffer, L"?   %ls", move_marker.c_str());
+				myswprintf(adBuffer, L"ATK ?  %ls", move_marker.c_str());
 			else
-				myswprintf(adBuffer, L"%d   %ls", cd.atk, move_marker.c_str());
-			myswprintf(formatBuffer, L"%ls/%ls %ls", race.c_str(), from.c_str(), adBuffer);
+				myswprintf(adBuffer, L"ATK %d  %ls", cd.atk, move_marker.c_str());
+			myswprintf(formatBuffer, L"%ls/%ls %ls", from.c_str(), race.c_str(), adBuffer);
 			stMonsInfo->setText(formatBuffer);
 			offset = 23;
 		}
@@ -1848,41 +1822,31 @@ void Game::OnResize() {
 	cbSortType->setRelativePosition(Resize(10, 2, 85, 22));
 	wFilter->setRelativePosition(Resize(610, 5, 1020, 130));
 	scrFilter->setRelativePosition(Resize(999, 161, 1019, 629));
-	cbCardType->setRelativePosition(Resize(60, 25 / 6, 120, 20 + 25 / 6));
-	cbCardType2->setRelativePosition(Resize(125, 25 / 6, 195, 20 + 25 / 6));
-	cbRace->setRelativePosition(Resize(60, 40 + 75 / 6, 195, 60 + 75 / 6));
-	cbAttribute->setRelativePosition(Resize(60, 20 + 50 / 6, 195, 40 + 50 / 6));
-	cbLimit->setRelativePosition(Resize(260, 25 / 6, 390, 20 + 25 / 6));
-	ebStar->setRelativePosition(Resize(60, 60 + 100 / 6, 95, 80 + 100 / 6));
-	ebScale->setRelativePosition(Resize(155, 60 + 100 / 6, 195, 80 + 100 / 6));
-	ebAttack->setRelativePosition(Resize(260, 20 + 50 / 6, 340, 40 + 50 / 6));
-	ebDefense->setRelativePosition(Resize(260, 40 + 75 / 6, 340, 60 + 75 / 6));
-	ebCardName->setRelativePosition(Resize(260, 60 + 100 / 6, 390, 80 + 100 / 6));
-	btnEffectFilter->setRelativePosition(Resize(345, 20 + 50 / 6, 390, 60 + 75 / 6));
-	btnStartFilter->setRelativePosition(Resize(260, 80 + 125 / 6, 390, 100 + 125 / 6));
-	if(btnClearFilter)
-		btnClearFilter->setRelativePosition(Resize(205, 80 + 125 / 6, 255, 100 + 125 / 6));
-	btnMarksFilter->setRelativePosition(Resize(60, 80 + 125 / 6, 195, 100 + 125 / 6));
+	cbCardType->setRelativePosition(Resize(60, 5, 120, 30));
+	cbCardType2->setRelativePosition(Resize(125, 5, 195, 30));
+	cbFrom->setRelativePosition(Resize(60, 35, 195, 60));
+	cbRace->setRelativePosition(Resize(60, 65, 195, 90));
+	cbLimit->setRelativePosition(Resize(260, 5, 390, 30));
+	ebSpend->setRelativePosition(Resize(260, 35, 300, 60));
+	ebLife->setRelativePosition(Resize(350, 35, 390, 60));
+	ebAttack->setRelativePosition(Resize(260, 65, 300, 90));
+	ebKeyword->setRelativePosition(Resize(60, 95, 195, 120));
+	if (btnClearFilter)
+		btnClearFilter->setRelativePosition(Resize(205, 95, 255, 120));
+	btnStartFilter->setRelativePosition(Resize(260, 95, 390, 120));
+	btnMoveMarksFilter->setRelativePosition(Resize(305, 65, 390, 90));
+	wMoveMarks->setRelativePosition(ResizeWin(900, 30, 1020, 150));
+	stDeckType->setRelativePosition(Resize(10, 9, 100, 29));
+	stDeckList->setRelativePosition(Resize(10, 39, 100, 59));
+	stCardType->setRelativePosition(Resize(10, 9, 70, 29));
+	stFrom->setRelativePosition(Resize(10, 39, 70, 59));
+	stRace->setRelativePosition(Resize(10, 69, 70, 89));
+	stKeyword->setRelativePosition(Resize(10, 99, 280, 119));
+	stLimit->setRelativePosition(Resize(205, 9, 280, 29));
+	stSpend->setRelativePosition(Resize(205, 39, 265, 59));
+	stLife->setRelativePosition(Resize(305, 39, 350, 59));
+	stAttack->setRelativePosition(Resize(205, 69, 280, 89));
 
-	irr::core::recti btncatepos = btnEffectFilter->getAbsolutePosition();
-	wCategories->setRelativePosition(irr::core::recti(
-		btncatepos.LowerRightCorner.X - wCategories->getRelativePosition().getWidth(),
-		btncatepos.LowerRightCorner.Y - btncatepos.getHeight() / 2,
-		btncatepos.LowerRightCorner.X,
-		btncatepos.LowerRightCorner.Y - btncatepos.getHeight() / 2 + 245));
-
-	wLinkMarks->setRelativePosition(ResizeWin(700, 30, 820, 150));
-	stDBCategory->setRelativePosition(Resize(10, 9, 100, 29));
-	stDeck->setRelativePosition(Resize(10, 39, 100, 59));
-	stCategory->setRelativePosition(Resize(10, 2 + 25 / 6, 70, 22 + 25 / 6));
-	stLimit->setRelativePosition(Resize(205, 2 + 25 / 6, 280, 22 + 25 / 6));
-	stAttribute->setRelativePosition(Resize(10, 22 + 50 / 6, 70, 42 + 50 / 6));
-	stRace->setRelativePosition(Resize(10, 42 + 75 / 6, 70, 62 + 75 / 6));
-	stAttack->setRelativePosition(Resize(205, 22 + 50 / 6, 280, 42 + 50 / 6));
-	stDefense->setRelativePosition(Resize(205, 42 + 75 / 6, 280, 62 + 75 / 6));
-	stStar->setRelativePosition(Resize(10, 62 + 100 / 6, 70, 82 + 100 / 6));
-	stSearch->setRelativePosition(Resize(205, 62 + 100 / 6, 280, 82 + 100 / 6));
-	stScale->setRelativePosition(Resize(105, 62 + 100 / 6, 165, 82 + 100 / 6));
 	btnSideOK->setRelativePosition(Resize(400, 40, 710, 80));
 	btnSideShuffle->setRelativePosition(Resize(310, 100, 370, 130));
 	btnSideSort->setRelativePosition(Resize(375, 100, 435, 130));

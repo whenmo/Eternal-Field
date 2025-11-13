@@ -1155,7 +1155,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 			break;
 		}
 	}
-	if (cbLimit->getSelected() >= 4 && (cp->second.ot & AVAIL_CUSTOM))
+	if (cbLimit->getSelected() >= 4 && (cp->second.rule & RULE_DIY))
 		driver->draw2DImage(imageManager.tdiy, otloc, irr::core::recti(0, 0, 128, 64), 0, 0, true);
 }
 void Game::DrawDeckBd() {
@@ -1251,21 +1251,20 @@ void Game::DrawDeckBd() {
 		DrawThumb(ptr, irr::core::vector2di(810, 165 + i * 66), deckBuilder.filterList);
 		myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
 		DrawShadowText(textFont, textBuffer, Resize(860, 165 + i * 66, 955, 185 + i * 66), Resize(1, 1, 0, 0));
-		int form_id = (ptr->second.type & TYPE_AREA) ? 1336 : 1324;
-		const wchar_t* prefix_str = dataManager.GetSysString(form_id);
+		const wchar_t* prefix_value = (ptr->second.type & TYPE_AREA) ? L"LP" : L"\u00A4";
 		const wchar_t* diyBuffer = L"";
-		if (ptr->second.ot & AVAIL_CUSTOM)
+		if (ptr->second.rule & RULE_DIY)
 			diyBuffer = L"[Diy]";
-		myswprintf(textBuffer, L"%ls%d %ls", prefix_str, ptr->second.level, diyBuffer);
+		myswprintf(textBuffer, L"%ls %d %ls", prefix_value, ptr->second.level, diyBuffer);
 		DrawShadowText(textFont, textBuffer, Resize(860, 187 + i * 66, 955, 207 + i * 66), Resize(1, 1, 0, 0));
 		if (ptr->second.type & TYPE_MONS) {
 			const auto& from = dataManager.FormatFrom(ptr->second.from);
 			const auto& race = dataManager.FormatRace(ptr->second.race);
-			wchar_t atkBuffer[8]{};
+			wchar_t atkBuffer[16]{};
 			if (ptr->second.atk < 0)
-				myswprintf(atkBuffer, L"?");
+				myswprintf(atkBuffer, L"ATK ?");
 			else
-				myswprintf(atkBuffer, L"%d", ptr->second.atk);
+				myswprintf(atkBuffer, L"ATK %d", ptr->second.atk);
 			myswprintf(textBuffer, L"%ls/%ls %ls", from.c_str(), race.c_str(), atkBuffer);
 		}
 		else {

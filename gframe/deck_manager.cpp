@@ -76,9 +76,9 @@ const LFList* DeckManager::GetLFList(unsigned int lfhash) {
 static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 	if((ot & avail) == avail)
 		return 0;
-	if((ot & AVAIL_OCG) && (avail != AVAIL_OCG))
+	if((ot & RULE_OCG) && (avail != RULE_OCG))
 		return DECKERROR_OCGONLY;
-	if((ot & AVAIL_TCG) && (avail != AVAIL_TCG))
+	if((ot & RULE_TCG) && (avail != RULE_TCG))
 		return DECKERROR_TCGONLY;
 	return DECKERROR_NOTAVAIL;
 }
@@ -95,12 +95,12 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 	if (!lflist)
 		return 0;
 	auto& list = lflist->content;
-	const unsigned int rule_map[6] = { AVAIL_OCG, AVAIL_TCG, AVAIL_SC, AVAIL_CUSTOM, AVAIL_OCGTCG, 0 };
+	const unsigned int rule_map[6] = { RULE_OCG, RULE_TCG, RULE_SC, RULE_DIY, RULE_OT, 0 };
 	unsigned int avail = 0;
 	if (rule >= 0 && rule < (int)(sizeof rule_map / sizeof rule_map[0]))
 		avail = rule_map[rule];
 	for (auto& cit : deck.main) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
 		if (cit->second.type & (TYPE_AREA | TYPE_TOKEN))
@@ -115,7 +115,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (DECKERROR_LFLIST << 28) | cit->first;
 	}
 	for (auto& cit : deck.extra) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
 		if (!(cit->second.type & TYPE_AREA) || cit->second.type & TYPE_TOKEN)
@@ -130,7 +130,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (DECKERROR_LFLIST << 28) | cit->first;
 	}
 	for (auto& cit : deck.side) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
 		if (cit->second.type & TYPE_TOKEN)
