@@ -22,28 +22,29 @@ bool DataManager::ReadDB(sqlite3* pDB, bool is_diy) {
 
 	// EFCG cdb
 	//datas : id,alias,setcode,type,value,atk,move,race,from
-	uint32_t rule = is_diy ? RULE_DIY : RULE_OCG;
+	uint32_t allow = is_diy ? ALLOW_DIY : ALLOW_EFCG;
 	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
 		if (step != SQLITE_ROW)
 			return Error(pDB, pStmt);
 		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
 		auto& cd = _datas[code];
+		cd.allow = allow;
 		cd.code = code;
-		cd.rule = rule;
 		cd.alias = sqlite3_column_int(pStmt, 1);
 		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 2));
 		write_setcode(cd.setcode, setcode);
 		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 3));
-		cd.level = sqlite3_column_int(pStmt, 4);
+		cd.energy = sqlite3_column_int(pStmt, 4);
+		if (cd.type & TYPE_AREA) {
+			cd.life = cd.energy;
+			cd.energy = 0;
+		}
+		else
+			cd.life = 0;
 		cd.atk = sqlite3_column_int(pStmt, 5);
-		cd.move_marker = sqlite3_column_int(pStmt, 6);
+		cd.move = sqlite3_column_int(pStmt, 6);
 		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 7));
 		cd.from = static_cast<decltype(cd.from)>(sqlite3_column_int64(pStmt, 8));
-		//will del
-		cd.defense = 0;
-		cd.lscale = 0;
-		cd.rscale = 0;
-		cd.category = 0;
 		auto& cs = _strings[code];
 		if (const char* text = (const char*)sqlite3_column_text(pStmt, 10)) {
 			BufferIO::DecodeUTF8(text, strBuffer);
@@ -61,52 +62,6 @@ bool DataManager::ReadDB(sqlite3* pDB, bool is_diy) {
 			}
 		}
 	}
-	// ygo cdb
-	/*
-	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
-		if (step != SQLITE_ROW)
-			return Error(pDB, pStmt);
-		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
-		auto& cd = _datas[code];
-		cd.code = code;
-		cd.rule = sqlite3_column_int(pStmt, 1);
-		cd.alias = sqlite3_column_int(pStmt, 2);
-		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
-		write_setcode(cd.setcode, setcode);
-		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
-		cd.atk = sqlite3_column_int(pStmt, 5);
-		cd.defense = sqlite3_column_int(pStmt, 6);
-		if (cd.type & TYPE_LINK) {
-			cd.move_marker = cd.defense;
-			cd.defense = 0;
-		}
-		else
-			cd.move_marker = 0;
-		uint32_t level = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 7));
-		cd.level = level & 0xff;
-		cd.lscale = (level >> 24) & 0xff;
-		cd.rscale = (level >> 16) & 0xff;
-		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 8));
-		cd.from = static_cast<decltype(cd.from)>(sqlite3_column_int64(pStmt, 9));
-		cd.category = static_cast<decltype(cd.category)>(sqlite3_column_int64(pStmt, 10));
-		auto& cs = _strings[code];
-		if (const char* text = (const char*)sqlite3_column_text(pStmt, 12)) {
-			BufferIO::DecodeUTF8(text, strBuffer);
-			cs.name = strBuffer;
-		}
-		if (const char* text = (const char*)sqlite3_column_text(pStmt, 13)) {
-			BufferIO::DecodeUTF8(text, strBuffer);
-			cs.text = strBuffer;
-		}
-		constexpr int desc_count = sizeof cs.desc / sizeof cs.desc[0];
-		for (int i = 0; i < desc_count; ++i) {
-			if (const char* text = (const char*)sqlite3_column_text(pStmt, i + 14)) {
-				BufferIO::DecodeUTF8(text, strBuffer);
-				cs.desc[i] = strBuffer;
-			}
-		}
-	}
-	*/
 	sqlite3_finalize(pStmt);
 	for (const auto& entry : extra_setcode) {
 		const auto& code = entry.first;
@@ -393,23 +348,25 @@ std::wstring DataManager::FormatSetName(const uint16_t setcode[]) const {
 	return buffer;
 }
 std::wstring DataManager::FormatMoveMarker(unsigned int move_marker) const {
+	if (move_marker == 0)
+		return L"";
 	std::wstring buffer;
 	if (move_marker & MOVE_MARKER_TOP_LEFT)
-		buffer.append(L"[\u2196]");
+		buffer.append(L"\u2196");
 	if (move_marker & MOVE_MARKER_TOP)
-		buffer.append(L"[\u2191]");
+		buffer.append(L"\u2191");
 	if (move_marker & MOVE_MARKER_TOP_RIGHT)
-		buffer.append(L"[\u2197]");
+		buffer.append(L"\u2197");
 	if (move_marker & MOVE_MARKER_LEFT)
-		buffer.append(L"[\u2190]");
+		buffer.append(L"\u2190");
 	if (move_marker & MOVE_MARKER_RIGHT)
-		buffer.append(L"[\u2192]");
+		buffer.append(L"\u2192");
 	if (move_marker & MOVE_MARKER_BOTTOM_LEFT)
-		buffer.append(L"[\u2199]");
+		buffer.append(L"\u2199");
 	if (move_marker & MOVE_MARKER_BOTTOM)
-		buffer.append(L"[\u2193]");
+		buffer.append(L"\u2193");
 	if (move_marker & MOVE_MARKER_BOTTOM_RIGHT)
-		buffer.append(L"[\u2198]");
+		buffer.append(L"\u2198");
 	return buffer;
 }
 uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
@@ -470,64 +427,70 @@ unsigned char* DataManager::ReadScriptFromFile(const char* script_name, int* sle
 	*slen = (int)len;
 	return scriptBuffer;
 }
-bool DataManager::deck_sort_lv(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
-		if (type1 != type2)
-			return type1 < type2;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
+bool DataManager::deck_sort_energy(code_pointer p1, code_pointer p2) {
+	uint32_t type1 = p1->second.type & TYPE_MAIN;
+	if (type1 != (p2->second.type & TYPE_MAIN))
+		return type1 < (p2->second.type & TYPE_MAIN);
+	if (type1 == TYPE_MONS) {
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
 		if (p1->second.atk != p2->second.atk)
 			return p1->second.atk > p2->second.atk;
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
-		return p1->first < p2->first;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	else if (type1 == TYPE_AREA) {
+		if (p1->second.life != p2->second.life)
+			return p1->second.life > p2->second.life;
+	}
+	else {
+		if ((p1->second.type & TYPE_SUB) != (p2->second.type & TYPE_SUB))
+			return (p1->second.type & TYPE_SUB) < (p2->second.type & TYPE_SUB);
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
+	}
 	return p1->first < p2->first;
 }
 bool DataManager::deck_sort_atk(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
+	uint32_t type1 = p1->second.type & TYPE_MAIN;
+	if (type1 != (p2->second.type & TYPE_MAIN))
+		return type1 < (p2->second.type & TYPE_MAIN);
+	if (type1 == TYPE_MONS) {
 		if (p1->second.atk != p2->second.atk)
 			return p1->second.atk > p2->second.atk;
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
-		if (type1 != type2)
-			return type1 < type2;
-		return p1->first < p2->first;
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	else if (type1 == TYPE_AREA) {
+		if (p1->second.life != p2->second.life)
+			return p1->second.life > p2->second.life;
+	}
+	else {
+		if ((p1->second.type & TYPE_SUB) != (p2->second.type & TYPE_SUB))
+			return (p1->second.type & TYPE_SUB) < (p2->second.type & TYPE_SUB);
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
+	}
 	return p1->first < p2->first;
 }
-bool DataManager::deck_sort_def(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
+bool DataManager::deck_sort_life(code_pointer p1, code_pointer p2) {
+	uint32_t type1 = p1->second.type & TYPE_MAIN;
+	if (type1 != (p2->second.type & TYPE_MAIN))
+		return type1 > (p2->second.type & TYPE_MAIN);
+	if (type1 == TYPE_MONS) {
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
 		if (p1->second.atk != p2->second.atk)
 			return p1->second.atk > p2->second.atk;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
-		if (type1 != type2)
-			return type1 < type2;
-		return p1->first < p2->first;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	else if (type1 == TYPE_AREA) {
+		if (p1->second.life != p2->second.life)
+			return p1->second.life > p2->second.life;
+	}
+	else {
+		if ((p1->second.type & TYPE_SUB) != (p2->second.type & TYPE_SUB))
+			return (p1->second.type & TYPE_SUB) < (p2->second.type & TYPE_SUB);
+		if (p1->second.energy != p2->second.energy)
+			return p1->second.energy > p2->second.energy;
+	}
 	return p1->first < p2->first;
 }
 bool DataManager::deck_sort_name(code_pointer p1, code_pointer p2) {

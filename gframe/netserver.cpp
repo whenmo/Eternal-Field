@@ -274,8 +274,8 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		CTOS_CreateGame packet;
 		std::memcpy(&packet, pdata, sizeof packet);
 		auto pkt = &packet;
-		if(pkt->info.rule > CURRENT_RULE)
-			pkt->info.rule = CURRENT_RULE;
+		if(pkt->info.allow != 1)
+			pkt->info.allow = 0;
 		if(pkt->info.mode > MODE_TAG)
 			pkt->info.mode = MODE_SINGLE;
 		bool found = false;

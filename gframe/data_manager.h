@@ -26,19 +26,13 @@ struct CardDataC {
 	uint32_t alias{};
 	uint16_t setcode[SIZE_SETCODE]{};
 	uint32_t type{};
-	uint32_t spend{};
+	uint32_t energy{};
 	uint32_t life{};
 	uint32_t from{};
 	uint32_t race{};
 	int32_t atk{};
-	uint32_t move_marker{};
-	uint32_t rule{};
-	//del
-	uint32_t level{};
-	int32_t defense{};
-	uint32_t lscale{};
-	uint32_t rscale{};
-	uint32_t category{};
+	uint32_t move{};
+	uint32_t allow{};
 
 	bool is_setcodes(const std::vector<unsigned int>& values) const {
 		for (auto& value : values) {
@@ -118,9 +112,9 @@ public:
 	//read by fread
 	static unsigned char* ReadScriptFromFile(const char* script_name, int* slen);
 	
-	static bool deck_sort_lv(code_pointer l1, code_pointer l2);
+	static bool deck_sort_energy(code_pointer l1, code_pointer l2);
 	static bool deck_sort_atk(code_pointer l1, code_pointer l2);
-	static bool deck_sort_def(code_pointer l1, code_pointer l2);
+	static bool deck_sort_life(code_pointer l1, code_pointer l2);
 	static bool deck_sort_name(code_pointer l1, code_pointer l2);
 
 private:

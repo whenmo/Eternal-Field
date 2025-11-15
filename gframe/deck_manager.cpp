@@ -73,36 +73,31 @@ const LFList* DeckManager::GetLFList(unsigned int lfhash) {
 		return &(*lit);
 	return nullptr;
 }
-static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
-	if((ot & avail) == avail)
+static unsigned int checkAllow(unsigned int c_allow, unsigned int allow) {
+	if((c_allow & allow) == allow)
 		return 0;
-	if((ot & RULE_OCG) && (avail != RULE_OCG))
-		return DECKERROR_OCGONLY;
-	if((ot & RULE_TCG) && (avail != RULE_TCG))
-		return DECKERROR_TCGONLY;
 	return DECKERROR_NOTAVAIL;
 }
-unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int rule) {
+unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int host_allow_ind) {
 	std::unordered_map<int, int> ccount;
 	// rule
 	if(deck.main.size() < DECK_MIN_SIZE || deck.main.size() > DECK_MAX_SIZE)
 		return (DECKERROR_MAINCOUNT << 28) | (unsigned)deck.main.size();
-	if(deck.extra.size() > EXTRA_MAX_SIZE)
-		return (DECKERROR_EXTRACOUNT << 28) | (unsigned)deck.extra.size();
+	if (deck.main.size() < ADECK_MIN_SIZE || deck.main.size() > ADECK_MAX_SIZE)
+		return (DECKERROR_ADECKCOUNT << 28) | (unsigned)deck.area.size();
 	if(deck.side.size() > SIDE_MAX_SIZE)
 		return (DECKERROR_SIDECOUNT << 28) | (unsigned)deck.side.size();
 	auto lflist = GetLFList(lfhash);
 	if (!lflist)
 		return 0;
 	auto& list = lflist->content;
-	const unsigned int rule_map[6] = { RULE_OCG, RULE_TCG, RULE_SC, RULE_DIY, RULE_OT, 0 };
-	unsigned int avail = 0;
-	if (rule >= 0 && rule < (int)(sizeof rule_map / sizeof rule_map[0]))
-		avail = rule_map[rule];
+	unsigned int allow = ALLOW_ALL;
+	if (host_allow_ind == 0)
+		allow = ALLOW_EFCG;
 	for (auto& cit : deck.main) {
-		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
-		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
+		auto allowError = checkAllow(cit->second.allow, allow);
+		if(allowError)
+			return (allowError << 28) | cit->first;
 		if (cit->second.type & (TYPE_AREA | TYPE_TOKEN))
 			return (DECKERROR_MAINCOUNT << 28);
 		int code = cit->second.alias ? cit->second.alias : cit->first;
@@ -114,12 +109,12 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		if(it != list.end() && dc > it->second)
 			return (DECKERROR_LFLIST << 28) | cit->first;
 	}
-	for (auto& cit : deck.extra) {
-		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
-		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
+	for (auto& cit : deck.area) {
+		auto allowError = checkAllow(cit->second.allow, allow);
+		if(allowError)
+			return (allowError << 28) | cit->first;
 		if (!(cit->second.type & TYPE_AREA) || cit->second.type & TYPE_TOKEN)
-			return (DECKERROR_EXTRACOUNT << 28);
+			return (DECKERROR_ADECKCOUNT << 28);
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
 		int dc = ccount[code];
@@ -130,9 +125,9 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (DECKERROR_LFLIST << 28) | cit->first;
 	}
 	for (auto& cit : deck.side) {
-		auto gameruleDeckError = checkAvail(cit->second.rule, avail);
-		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
+		auto allowError = checkAllow(cit->second.allow, allow);
+		if(allowError)
+			return (allowError << 28) | cit->first;
 		if (cit->second.type & TYPE_TOKEN)
 			return (DECKERROR_SIDECOUNT << 28);
 		int code = cit->second.alias ? cit->second.alias : cit->first;
@@ -167,8 +162,8 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			continue;
 		}
 		if (cd.type & TYPE_AREA) {
-			if (deck.extra.size() < EXTRA_MAX_SIZE)
-				deck.extra.push_back(it);
+			if (deck.area.size() < ADECK_MAX_SIZE)
+				deck.area.push_back(it);
 		}
 		else {
 			if (deck.main.size() < DECK_MAX_SIZE)
@@ -222,18 +217,18 @@ bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 	std::unordered_map<uint32_t, int> ncount;
 	for(size_t i = 0; i < deck.main.size(); ++i)
 		pcount[deck.main[i]->first]++;
-	for(size_t i = 0; i < deck.extra.size(); ++i)
-		pcount[deck.extra[i]->first]++;
+	for(size_t i = 0; i < deck.area.size(); ++i)
+		pcount[deck.area[i]->first]++;
 	for(size_t i = 0; i < deck.side.size(); ++i)
 		pcount[deck.side[i]->first]++;
 	Deck ndeck;
 	LoadDeck(ndeck, dbuf, mainc, sidec);
-	if (ndeck.main.size() != deck.main.size() || ndeck.extra.size() != deck.extra.size() || ndeck.side.size() != deck.side.size())
+	if (ndeck.main.size() != deck.main.size() || ndeck.area.size() != deck.area.size() || ndeck.side.size() != deck.side.size())
 		return false;
 	for(size_t i = 0; i < ndeck.main.size(); ++i)
 		ncount[ndeck.main[i]->first]++;
-	for(size_t i = 0; i < ndeck.extra.size(); ++i)
-		ncount[ndeck.extra[i]->first]++;
+	for(size_t i = 0; i < ndeck.area.size(); ++i)
+		ncount[ndeck.area[i]->first]++;
 	for(size_t i = 0; i < ndeck.side.size(); ++i)
 		ncount[ndeck.side[i]->first]++;
 	for (auto& cdit : ncount)
@@ -334,9 +329,9 @@ void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
 	deckStream << "#main" << std::endl;
 	for(size_t i = 0; i < deck.main.size(); ++i)
 		deckStream << deck.main[i]->first << std::endl;
-	deckStream << "#extra" << std::endl;
-	for(size_t i = 0; i < deck.extra.size(); ++i)
-		deckStream << deck.extra[i]->first << std::endl;
+	deckStream << "#area" << std::endl;
+	for(size_t i = 0; i < deck.area.size(); ++i)
+		deckStream << deck.area[i]->first << std::endl;
 	deckStream << "!side" << std::endl;
 	for(size_t i = 0; i < deck.side.size(); ++i)
 		deckStream << deck.side[i]->first << std::endl;
@@ -392,8 +387,8 @@ bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {
 	std::fprintf(fp, "#created by ...\n#main\n");
 	for (const auto& code : deck.main)
 		std::fprintf(fp, "%u\n", code);
-	std::fprintf(fp, "#extra\n");
-	for (const auto& code : deck.extra)
+	std::fprintf(fp, "#area\n");
+	for (const auto& code : deck.area)
 		std::fprintf(fp, "%u\n", code);
 	std::fprintf(fp, "!side\n");
 	for (const auto& code : deck.side)

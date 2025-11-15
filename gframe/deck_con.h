@@ -36,26 +36,27 @@ public:
 	bool CardNameContains(const wchar_t *haystack, const wchar_t *needle);
 
 	bool push_main(code_pointer pointer, int seq = -1);
-	bool push_extra(code_pointer pointer, int seq = -1);
+	bool push_area(code_pointer pointer, int seq = -1);
 	bool push_side(code_pointer pointer, int seq = -1);
 	void pop_main(int seq);
-	void pop_extra(int seq);
+	void pop_area(int seq);
 	void pop_side(int seq);
 	bool check_limit(code_pointer pointer);
 
 	unsigned long long filter_effect{};
-	unsigned int filter_type{};
-	unsigned int filter_type2{};
+	unsigned int filter_type_main{};
+	unsigned int filter_type_sub{};
 	unsigned int filter_from{};
 	unsigned int filter_race{};
-	unsigned int filter_atktype{};
+	unsigned int filter_type_atk{};
 	int filter_atk{};
-	unsigned int filter_spendtype{};
-	unsigned int filter_spend{};
-	unsigned int filter_lifetype{};
+	unsigned int filter_type_energy{};
+	unsigned int filter_energy{};
+	unsigned int filter_type_life{};
 	unsigned int filter_life{};
 	unsigned int filter_marks{};
-	int filter_lm{};
+	int filter_limit{};
+	int filter_allow{};
 	irr::core::vector2di mouse_pos;
 	int hovered_code{};
 	int hovered_pos{};

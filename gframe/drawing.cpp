@@ -1155,7 +1155,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 			break;
 		}
 	}
-	if (cbLimit->getSelected() >= 4 && (cp->second.rule & RULE_DIY))
+	if (cbLimit->getSelected() >= 4 && (cp->second.allow & ALLOW_DIY))
 		driver->draw2DImage(imageManager.tdiy, otloc, irr::core::recti(0, 0, 128, 64), 0, 0, true);
 }
 void Game::DrawDeckBd() {
@@ -1195,18 +1195,18 @@ void Game::DrawDeckBd() {
 			driver->draw2DRectangleOutline(Resize(313 + (i % lx) * dx, 163 + (i / lx) * dy, 359 + (i % lx) * dx, 228 + (i / lx) * dy));
 	}
 	if(!deckBuilder.showing_pack) {
-		//extra deck
+		//area deck
 		driver->draw2DRectangle(Resize(310, 440, 410, 460), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(309, 439, 410, 460));
 		DrawShadowText(textFont, dataManager.GetSysString(1331), Resize(315, 440, 410, 460), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
-		DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.extra.size()), Resize(380, 441, 440, 461), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
+		DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.area.size()), Resize(380, 441, 440, 461), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
 		driver->draw2DRectangle(Resize(310, 463, 797, 533), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(309, 462, 797, 533));
-		if(deckManager.current_deck.extra.size() <= 10)
+		if(deckManager.current_deck.area.size() <= 10)
 			dx = 436.0f / 9;
-		else dx = 436.0f / (deckManager.current_deck.extra.size() - 1);
-		for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i) {
-			DrawThumb(deckManager.current_deck.extra[i], irr::core::vector2di(314 + i * dx, 466), deckBuilder.filterList);
+		else dx = 436.0f / (deckManager.current_deck.area.size() - 1);
+		for(size_t i = 0; i < deckManager.current_deck.area.size(); ++i) {
+			DrawThumb(deckManager.current_deck.area[i], irr::core::vector2di(314 + i * dx, 466), deckBuilder.filterList);
 			if(deckBuilder.hovered_pos == 2 && deckBuilder.hovered_seq == (int)i)
 				driver->draw2DRectangleOutline(Resize(313 + i * dx, 465, 359 + i * dx, 531));
 		}
@@ -1249,13 +1249,17 @@ void Game::DrawDeckBd() {
 		if (deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
 			driver->draw2DRectangle(0x80000000, Resize(806, 164 + i * 66, 1019, 230 + i * 66));
 		DrawThumb(ptr, irr::core::vector2di(810, 165 + i * 66), deckBuilder.filterList);
-		myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-		DrawShadowText(textFont, textBuffer, Resize(860, 165 + i * 66, 955, 185 + i * 66), Resize(1, 1, 0, 0));
-		const wchar_t* prefix_value = (ptr->second.type & TYPE_AREA) ? L"LP" : L"\u00A4";
 		const wchar_t* diyBuffer = L"";
-		if (ptr->second.rule & RULE_DIY)
+		if (ptr->second.allow & ALLOW_DIY)
 			diyBuffer = L"[Diy]";
-		myswprintf(textBuffer, L"%ls %d %ls", prefix_value, ptr->second.level, diyBuffer);
+		myswprintf(textBuffer, L"%ls %ls", dataManager.GetName(ptr->first), diyBuffer);
+		DrawShadowText(textFont, textBuffer, Resize(860, 165 + i * 66, 955, 185 + i * 66), Resize(1, 1, 0, 0));
+		if (ptr->second.type & TYPE_AREA)
+			myswprintf(textBuffer, L"LP %d", ptr->second.life);
+		else {
+			const auto& move_marker = dataManager.FormatMoveMarker(ptr->second.move);
+			myswprintf(textBuffer, L"\u00A4 %d %ls", ptr->second.energy, move_marker.c_str());
+		}
 		DrawShadowText(textFont, textBuffer, Resize(860, 187 + i * 66, 955, 207 + i * 66), Resize(1, 1, 0, 0));
 		if (ptr->second.type & TYPE_MONS) {
 			const auto& from = dataManager.FormatFrom(ptr->second.from);

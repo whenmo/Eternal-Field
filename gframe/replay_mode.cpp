@@ -186,28 +186,28 @@ bool ReplayMode::StartDuel() {
 			for (int i = 0; i < 2; ++i) {
 				for (const auto& code : cur_replay.decks[i].main)
 					new_card(pduel, code, i, i, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
-				for (const auto& code : cur_replay.decks[i].extra)
+				for (const auto& code : cur_replay.decks[i].area)
 					new_card(pduel, code, i, i, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
-				mainGame->dField.Initial(mainGame->LocalPlayer(i), cur_replay.decks[i].main.size(), cur_replay.decks[i].extra.size());
+				mainGame->dField.Initial(mainGame->LocalPlayer(i), cur_replay.decks[i].main.size(), cur_replay.decks[i].area.size());
 			}
 		} else {
 			for (const auto& code : cur_replay.decks[0].main)
 				new_card(pduel, code, 0, 0, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
-			for (const auto& code : cur_replay.decks[0].extra)
+			for (const auto& code : cur_replay.decks[0].area)
 				new_card(pduel, code, 0, 0, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
-			mainGame->dField.Initial(mainGame->LocalPlayer(0), cur_replay.decks[0].main.size(), cur_replay.decks[0].extra.size());
+			mainGame->dField.Initial(mainGame->LocalPlayer(0), cur_replay.decks[0].main.size(), cur_replay.decks[0].area.size());
 			for (const auto& code : cur_replay.decks[1].main)
 				new_tag_card(pduel, code, 0, LOCATION_DECK);
-			for (const auto& code : cur_replay.decks[1].extra)
+			for (const auto& code : cur_replay.decks[1].area)
 				new_tag_card(pduel, code, 0, LOCATION_ADECK);
 			for (const auto& code : cur_replay.decks[2].main)
 				new_card(pduel, code, 1, 1, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
-			for (const auto& code : cur_replay.decks[2].extra)
+			for (const auto& code : cur_replay.decks[2].area)
 				new_card(pduel, code, 1, 1, LOCATION_ADECK, 0, POS_FACEDOWN_DEFENSE);
-			mainGame->dField.Initial(mainGame->LocalPlayer(1), cur_replay.decks[2].main.size(), cur_replay.decks[2].extra.size());
+			mainGame->dField.Initial(mainGame->LocalPlayer(1), cur_replay.decks[2].main.size(), cur_replay.decks[2].area.size());
 			for (const auto& code : cur_replay.decks[3].main)
 				new_tag_card(pduel, code, 1, LOCATION_DECK);
-			for (const auto& code : cur_replay.decks[3].extra)
+			for (const auto& code : cur_replay.decks[3].area)
 				new_tag_card(pduel, code, 1, LOCATION_ADECK);
 		}
 	} else {

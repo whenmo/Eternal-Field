@@ -20,14 +20,14 @@ constexpr int MAX_DATA_SIZE = UINT16_MAX - 1;
 
 struct HostInfo {
 	uint32_t lflist{};
-	uint8_t rule{};
+	uint8_t allow{};
 	uint8_t mode{};
 	uint8_t duel_rule{};
 	uint8_t no_check_deck{};
 	uint8_t no_shuffle_deck{};
 	// byte padding[3]
 
-	int32_t start_lp{};
+	int32_t start_energy{};
 	uint8_t start_hand{};
 	uint8_t draw_count{};
 	uint16_t time_limit{};
@@ -322,15 +322,13 @@ public:
 #define ERRMSG_SIDEERROR	0x3
 #define ERRMSG_VERERROR		0x4
 
-#define DECKERROR_LFLIST		0x1U
-#define DECKERROR_OCGONLY		0x2U
-#define DECKERROR_TCGONLY		0x3U
-#define DECKERROR_UNKNOWNCARD	0x4U
-#define DECKERROR_CARDCOUNT		0x5U
-#define DECKERROR_MAINCOUNT		0x6U
-#define DECKERROR_EXTRACOUNT	0x7U
-#define DECKERROR_SIDECOUNT		0x8U
-#define DECKERROR_NOTAVAIL		0x9U
+#define DECKERROR_LFLIST		1U
+#define DECKERROR_UNKNOWNCARD	2U
+#define DECKERROR_CARDCOUNT		3U
+#define DECKERROR_MAINCOUNT		4U
+#define DECKERROR_ADECKCOUNT	5U
+#define DECKERROR_SIDECOUNT		6U
+#define DECKERROR_NOTAVAIL		7U
 
 #define MODE_SINGLE		0x0
 #define MODE_MATCH		0x1

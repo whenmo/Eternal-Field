@@ -95,7 +95,7 @@ int SingleMode::SinglePlayThread() {
 	mainGame->wCardImg->setVisible(true);
 	mainGame->wInfos->setVisible(true);
 	mainGame->btnLeaveGame->setVisible(true);
-	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1210));
+	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1204));
 	mainGame->wPhase->setVisible(true);
 	mainGame->dField.Clear();
 	mainGame->dInfo.isFirst = true;

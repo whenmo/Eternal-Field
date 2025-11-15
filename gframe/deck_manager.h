@@ -10,7 +10,8 @@ namespace ygo {
 
 constexpr int DECK_MAX_SIZE = 60;
 constexpr int DECK_MIN_SIZE = 40;
-constexpr int EXTRA_MAX_SIZE = 15;
+constexpr int ADECK_MAX_SIZE = 5;
+constexpr int ADECK_MIN_SIZE = 1;
 constexpr int SIDE_MAX_SIZE = 15;
 constexpr int PACK_MAX_SIZE = 1000;
 
@@ -30,24 +31,24 @@ struct LFList {
 };
 struct Deck {
 	std::vector<code_pointer> main;
-	std::vector<code_pointer> extra;
+	std::vector<code_pointer> area;
 	std::vector<code_pointer> side;
 	Deck() = default;
 	Deck(const Deck& ndeck) {
 		main = ndeck.main;
-		extra = ndeck.extra;
+		area = ndeck.area;
 		side = ndeck.side;
 	}
 	void clear() {
 		main.clear();
-		extra.clear();
+		area.clear();
 		side.clear();
 	}
 };
 
 struct DeckArray {
 	std::vector<uint32_t> main;
-	std::vector<uint32_t> extra;
+	std::vector<uint32_t> area;
 	std::vector<uint32_t> side;
 };
 
@@ -62,7 +63,7 @@ public:
 	void LoadLFList();
 	const wchar_t* GetLFListName(unsigned int lfhash);
 	const LFList* GetLFList(unsigned int lfhash);
-	unsigned int CheckDeck(const Deck& deck, unsigned int lfhash, int rule);
+	unsigned int CheckDeck(const Deck& deck, unsigned int lfhash, int host_allow_ind);
 	bool LoadCurrentDeck(const wchar_t* file, bool is_packlist = false);
 	bool LoadCurrentDeck(int category_index, const wchar_t* category_name, const wchar_t* deckname);
 	bool LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist = false);

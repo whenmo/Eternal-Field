@@ -243,12 +243,11 @@ void SingleDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 		return;
 	if(is_ready) {
 		unsigned int deckerror = 0;
-		if(!host_info.no_check_deck) {
-			if(deck_error[dp->type]) {
+		if (!host_info.no_check_deck) {
+			if (deck_error[dp->type])
 				deckerror = (DECKERROR_UNKNOWNCARD << 28) | deck_error[dp->type];
-			} else {
-				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
-			}
+			else
+				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.allow);
 		}
 		if(deckerror) {
 			STOC_HS_PlayerChange scpc;
@@ -332,10 +331,10 @@ void SingleDuel::StartDuel(DuelPlayer* dp) {
 	unsigned char deckbuff[12];
 	auto pbuf = deckbuff;
 	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[0].main.size());
-	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[0].extra.size());
+	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[0].area.size());
 	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[0].side.size());
 	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[1].main.size());
-	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[1].extra.size());
+	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[1].area.size());
 	BufferIO::Write<uint16_t>(pbuf, (uint16_t)pdeck[1].side.size());
 	NetServer::SendBufferToPlayer(players[0], STOC_DECK_COUNT, deckbuff, 12);
 	char tempbuff[6];
@@ -433,12 +432,12 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_card_reader(DataManager::CardReader);
 	set_message_handler(SingleDuel::MessageHandler);
 	pduel = create_duel_v2(rh.seed_sequence);
-	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
-	set_player_info(pduel, 1, host_info.start_lp, host_info.start_hand, host_info.draw_count);
+	set_player_info(pduel, 0, host_info.start_energy, host_info.start_hand, host_info.draw_count);
+	set_player_info(pduel, 1, host_info.start_energy, host_info.start_hand, host_info.draw_count);
 	unsigned int opt = (unsigned int)host_info.duel_rule << 16;
 	if(host_info.no_shuffle_deck)
 		opt |= DUEL_PSEUDO_SHUFFLE;
-	last_replay.WriteInt32(host_info.start_lp, false);
+	last_replay.WriteInt32(host_info.start_energy, false);
 	last_replay.WriteInt32(host_info.start_hand, false);
 	last_replay.WriteInt32(host_info.draw_count, false);
 	last_replay.WriteInt32(opt, false);
@@ -451,17 +450,17 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 		}
 	};
 	load(pdeck[0].main, 0, LOCATION_DECK);
-	load(pdeck[0].extra, 0, LOCATION_ADECK);
+	load(pdeck[0].area, 0, LOCATION_ADECK);
 	load(pdeck[1].main, 1, LOCATION_DECK);
-	load(pdeck[1].extra, 1, LOCATION_ADECK);
+	load(pdeck[1].area, 1, LOCATION_ADECK);
 	last_replay.Flush();
 	unsigned char startbuf[32]{};
 	auto pbuf = startbuf;
 	BufferIO::Write<uint8_t>(pbuf, MSG_START);
 	BufferIO::Write<uint8_t>(pbuf, 0);
 	BufferIO::Write<uint8_t>(pbuf, host_info.duel_rule);
-	BufferIO::Write<int32_t>(pbuf, host_info.start_lp);
-	BufferIO::Write<int32_t>(pbuf, host_info.start_lp);
+	BufferIO::Write<int32_t>(pbuf, host_info.start_energy);
+	BufferIO::Write<int32_t>(pbuf, host_info.start_energy);
 	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 0, LOCATION_DECK));
 	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 0, LOCATION_ADECK));
 	BufferIO::Write<uint16_t>(pbuf, query_field_count(pduel, 1, LOCATION_DECK));

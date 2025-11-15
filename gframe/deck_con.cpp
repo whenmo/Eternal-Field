@@ -174,9 +174,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SORT_DECK: {
-				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), DataManager::deck_sort_lv);
-				std::sort(deckManager.current_deck.extra.begin(), deckManager.current_deck.extra.end(), DataManager::deck_sort_lv);
-				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), DataManager::deck_sort_lv);
+				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), DataManager::deck_sort_energy);
+				std::sort(deckManager.current_deck.area.begin(), deckManager.current_deck.area.end(), DataManager::deck_sort_energy);
+				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), DataManager::deck_sort_energy);
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
@@ -493,7 +493,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					if(!FileSystem::IsFileExists(filepath)) {
 						if(prev_operation == BUTTON_NEW_DECK) {
 							deckManager.current_deck.main.clear();
-							deckManager.current_deck.extra.clear();
+							deckManager.current_deck.area.clear();
 							deckManager.current_deck.side.clear();
 						} else {
 							const wchar_t* txt = mainGame->env->getOSOperator()->getTextFromClipboard();
@@ -678,7 +678,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_SIDE_OK: {
 				if(deckManager.current_deck.main.size() != pre_mainc
-					|| deckManager.current_deck.extra.size() != pre_extrac
+					|| deckManager.current_deck.area.size() != pre_extrac
 					|| deckManager.current_deck.side.size() != pre_sidec) {
 					soundManager.PlaySoundEffect(SOUND_INFO);
 					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1410));
@@ -687,12 +687,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->ClearCardInfo();
 				unsigned char deckbuf[1024]{};
 				auto pdeck = deckbuf;
-				BufferIO::Write<int32_t>(pdeck, static_cast<int32_t>(deckManager.current_deck.main.size() + deckManager.current_deck.extra.size()));
+				BufferIO::Write<int32_t>(pdeck, static_cast<int32_t>(deckManager.current_deck.main.size() + deckManager.current_deck.area.size()));
 				BufferIO::Write<int32_t>(pdeck, static_cast<int32_t>(deckManager.current_deck.side.size()));
 				for(size_t i = 0; i < deckManager.current_deck.main.size(); ++i)
 					BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.main[i]->first);
-				for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i)
-					BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.extra[i]->first);
+				for(size_t i = 0; i < deckManager.current_deck.area.size(); ++i)
+					BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.area[i]->first);
 				for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i)
 					BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.side[i]->first);
 				DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
@@ -731,7 +731,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				if(prev_operation == BUTTON_CLEAR_DECK) {
 					deckManager.current_deck.main.clear();
-					deckManager.current_deck.extra.clear();
+					deckManager.current_deck.area.clear();
 					deckManager.current_deck.side.clear();
 				} else if(prev_operation == BUTTON_DELETE_DECK) {
 					int sel = prev_sel;
@@ -785,23 +785,27 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MARKERS_OK: {
 				filter_marks = 0;
 				if (mainGame->btnMark[0]->isPressed())
-					filter_marks |= 0100;
+					filter_marks |= MOVE_MARKER_TOP_LEFT;
 				if (mainGame->btnMark[1]->isPressed())
-					filter_marks |= 0200;
+					filter_marks |= MOVE_MARKER_TOP;
 				if (mainGame->btnMark[2]->isPressed())
-					filter_marks |= 0400;
+					filter_marks |= MOVE_MARKER_TOP_RIGHT;
 				if (mainGame->btnMark[3]->isPressed())
-					filter_marks |= 0010;
+					filter_marks |= MOVE_MARKER_LEFT;
 				if (mainGame->btnMark[4]->isPressed())
-					filter_marks |= 0040;
+					filter_marks |= MOVE_MARKER_RIGHT;
 				if (mainGame->btnMark[5]->isPressed())
-					filter_marks |= 0001;
+					filter_marks |= MOVE_MARKER_BOTTOM_LEFT;
 				if (mainGame->btnMark[6]->isPressed())
-					filter_marks |= 0002;
+					filter_marks |= MOVE_MARKER_BOTTOM;
 				if (mainGame->btnMark[7]->isPressed())
-					filter_marks |= 0004;
+					filter_marks |= MOVE_MARKER_BOTTOM_RIGHT;
 				mainGame->HideElement(mainGame->wMoveMarks);
 				mainGame->btnMoveMarksFilter->setPressed(filter_marks > 0);
+				std::wstring btntxt = dataManager.GetSysString(1080);
+				if (filter_marks > 0)
+					btntxt = dataManager.FormatMoveMarker(filter_marks);
+				mainGame->btnMoveMarksFilter->setText(btntxt.c_str());
 				InstantSearch();
 				break;
 			}
@@ -883,73 +887,97 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case COMBOBOX_MAINTYPE: {
-				mainGame->cbCardType2->setSelected(0);
+				mainGame->cbSubType->setSelected(0);
 				mainGame->cbFrom->setSelected(0);
 				mainGame->cbRace->setSelected(0);
 				mainGame->ebAttack->setText(L"");
-				mainGame->ebSpend->setText(L"");
+				mainGame->ebEnergy->setText(L"");
 				mainGame->ebLife->setText(L"");
-				switch(mainGame->cbCardType->getSelected()) {
+				switch(mainGame->cbMainType->getSelected()) {
 				case 0: { // N/A
-					mainGame->cbCardType2->setEnabled(false);
-					mainGame->cbCardType2->setSelected(0);
+					mainGame->cbSubType->setEnabled(false);
+					mainGame->cbSubType->setSelected(0);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebSpend->setEnabled(false);
+					mainGame->ebEnergy->setEnabled(false);
 					mainGame->ebLife->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setPressed(false);
+					mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
+					for (int i = 0; i < 8; ++i)
+						mainGame->btnMark[i]->setPressed(false);
 					break;
 				}
 				case 1: { // mons
 					wchar_t normaltuner[32];
 					wchar_t normalpen[32];
 					wchar_t syntuner[32];
-					mainGame->cbCardType2->setEnabled(false);
-					mainGame->cbCardType2->setSelected(0);
+					mainGame->cbSubType->setEnabled(false);
+					mainGame->cbSubType->setSelected(0);
 					mainGame->cbRace->setEnabled(true);
 					mainGame->cbFrom->setEnabled(true);
 					mainGame->ebAttack->setEnabled(true);
-					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebEnergy->setEnabled(true);
 					mainGame->ebLife->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setEnabled(true);
+					mainGame->btnMoveMarksFilter->setPressed(false);
+					mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
+					for (int i = 0; i < 8; ++i)
+						mainGame->btnMark[i]->setPressed(false);
 					break;
 				}
 				case 2: { // call
-					mainGame->cbCardType2->setEnabled(true);
+					mainGame->cbSubType->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebEnergy->setEnabled(true);
 					mainGame->ebLife->setEnabled(false);
-					mainGame->cbCardType2->clear();
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_CALL);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_FAST);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_CALL + TYPE_CONTINUOUS);
-					//mainGame->cbCardType2->addItem(dataManager.GetSysString(1068), TYPE_CALL + TYPE_EQUIP);
+					mainGame->cbSubType->clear();
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1080), 0);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1054), TYPE_CALL);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1066), TYPE_CALL + TYPE_FAST);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1067), TYPE_CALL + TYPE_CONTINUOUS);
+					mainGame->btnMoveMarksFilter->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setPressed(false);
+					mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
+					for (int i = 0; i < 8; ++i)
+						mainGame->btnMark[i]->setPressed(false);
 					break;
 				}
 				case 3: { // bane
-					mainGame->cbCardType2->setEnabled(true);
+					mainGame->cbSubType->setEnabled(true);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebSpend->setEnabled(true);
+					mainGame->ebEnergy->setEnabled(true);
 					mainGame->ebLife->setEnabled(false);
-					mainGame->cbCardType2->clear();
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1080), 0);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1054), TYPE_BANE);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1067), TYPE_BANE + TYPE_CONTINUOUS);
-					mainGame->cbCardType2->addItem(dataManager.GetSysString(1070), TYPE_BANE + TYPE_COUNTER);
+					mainGame->cbSubType->clear();
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1080), 0);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1054), TYPE_BANE);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1067), TYPE_BANE + TYPE_CONTINUOUS);
+					mainGame->cbSubType->addItem(dataManager.GetSysString(1070), TYPE_BANE + TYPE_COUNTER);
+					mainGame->btnMoveMarksFilter->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setPressed(false);
+					mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
+					for (int i = 0; i < 8; ++i)
+						mainGame->btnMark[i]->setPressed(false);
 					break;
 				}
 				case 4: { // area
-					mainGame->cbCardType2->setEnabled(false);
-					mainGame->cbCardType2->setSelected(0);
+					mainGame->cbSubType->setEnabled(false);
+					mainGame->cbSubType->setSelected(0);
 					mainGame->cbRace->setEnabled(false);
 					mainGame->cbFrom->setEnabled(false);
 					mainGame->ebAttack->setEnabled(false);
-					mainGame->ebSpend->setEnabled(false);
+					mainGame->ebEnergy->setEnabled(false);
 					mainGame->ebLife->setEnabled(true);
+					mainGame->btnMoveMarksFilter->setEnabled(false);
+					mainGame->btnMoveMarksFilter->setPressed(false);
+					mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
+					for (int i = 0; i < 8; ++i)
+						mainGame->btnMark[i]->setPressed(false);
 					break;
 				}
 				}
@@ -962,7 +990,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->env->setFocus(0);
 				break;
 			}
-			case COMBOBOX_SECONDTYPE:
+			case COMBOBOX_SUBTYPE:
 			case COMBOBOX_FROM:
 			case COMBOBOX_RACE:
 			case COMBOBOX_LIMIT:
@@ -1055,7 +1083,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			if(hovered_pos == 1)
 				pushed = push_main(draging_pointer, hovered_seq);
 			else if(hovered_pos == 2)
-				pushed = push_extra(draging_pointer, hovered_seq + is_lastcard);
+				pushed = push_area(draging_pointer, hovered_seq + is_lastcard);
 			else if(hovered_pos == 3)
 				pushed = push_side(draging_pointer, hovered_seq + is_lastcard);
 			else if(hovered_pos == 4 && !mainGame->is_siding)
@@ -1064,7 +1092,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				if(click_pos == 1)
 					push_main(draging_pointer);
 				else if(click_pos == 2)
-					push_extra(draging_pointer);
+					push_area(draging_pointer);
 				else if(click_pos == 3)
 					push_side(draging_pointer);
 			}
@@ -1094,9 +1122,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						pop_main(hovered_seq);
 				} else if(hovered_pos == 2) {
 					if(push_side(pointer))
-						pop_extra(hovered_seq);
+						pop_area(hovered_seq);
 				} else {
-					if(push_extra(pointer) || push_main(pointer))
+					if(push_area(pointer) || push_main(pointer))
 						pop_side(hovered_seq);
 				}
 				break;
@@ -1116,7 +1144,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				if(hovered_pos == 1) {
 					pop_main(hovered_seq);
 				} else if(hovered_pos == 2) {
-					pop_extra(hovered_seq);
+					pop_area(hovered_seq);
 				} else if(hovered_pos == 3) {
 					pop_side(hovered_seq);
 				} else {
@@ -1125,7 +1153,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						break;
 					if(!check_limit(pointer))
 						break;
-					if(!push_extra(pointer) && !push_main(pointer))
+					if(!push_area(pointer) && !push_main(pointer))
 						push_side(pointer);
 				}
 			} else {
@@ -1135,7 +1163,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				} else if(click_pos == 2) {
 					push_side(draging_pointer);
 				} else if(click_pos == 3) {
-					if(!push_extra(draging_pointer))
+					if(!push_area(draging_pointer))
 						push_main(draging_pointer);
 				} else {
 					push_side(draging_pointer);
@@ -1165,13 +1193,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				if(!push_main(pointer))
 					push_side(pointer);
 			} else if (hovered_pos == 2) {
-				if(!push_extra(pointer))
+				if(!push_area(pointer))
 					push_side(pointer);
 			} else if (hovered_pos == 3) {
-				if(!push_side(pointer) && !push_extra(pointer))
+				if(!push_side(pointer) && !push_area(pointer))
 					push_main(pointer);
 			} else {
-				if(!push_extra(pointer) && !push_main(pointer))
+				if(!push_area(pointer) && !push_main(pointer))
 					push_side(pointer);
 			}
 			break;
@@ -1183,7 +1211,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				if(hovered_pos == 1)
 					pop_main(hovered_seq);
 				else if(hovered_pos == 2)
-					pop_extra(hovered_seq);
+					pop_area(hovered_seq);
 				else if(hovered_pos == 3)
 					pop_side(hovered_seq);
 				is_starting_dragging = false;
@@ -1281,7 +1309,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_code = deckManager.current_deck.main[hovered_seq]->first;
 			}
 		} else if(y >= 466 && y <= 530) {
-			int lx = deckManager.current_deck.extra.size();
+			int lx = deckManager.current_deck.area.size();
 			hovered_pos = 2;
 			if(lx < 10)
 				lx = 10;
@@ -1289,11 +1317,11 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = lx - 1;
 			else
 				hovered_seq = (x - 314) * (lx - 1) / 436;
-			if(hovered_seq >= (int)deckManager.current_deck.extra.size()) {
+			if(hovered_seq >= (int)deckManager.current_deck.area.size()) {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.extra[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.area[hovered_seq]->first;
 				if(x >= 772)
 					is_lastcard = 1;
 			}
@@ -1338,17 +1366,36 @@ void DeckBuilder::GetHoveredCard() {
 	}
 }
 void DeckBuilder::StartFilter() {
-	filter_type = mainGame->cbCardType->getSelected();
-	filter_type2 = mainGame->cbCardType2->getItemData(mainGame->cbCardType2->getSelected());
-	filter_lm = mainGame->cbLimit->getSelected();
-	if (filter_type == 4)  // area
-		filter_life = parse_filter(mainGame->ebLife->getText(), &filter_lifetype);
-	else if (filter_type != 0) { // not area and not N/A
+	filter_type_main = mainGame->cbMainType->getSelected();
+	filter_type_sub = mainGame->cbSubType->getItemData(mainGame->cbSubType->getSelected());
+	filter_limit = mainGame->cbLimit->getSelected();
+	filter_allow = mainGame->cbAllow->getSelected();
+	filter_marks = 0;
+	if (filter_type_main == 1) { // mons
 		filter_from = mainGame->cbFrom->getItemData(mainGame->cbFrom->getSelected());
 		filter_race = mainGame->cbRace->getItemData(mainGame->cbRace->getSelected());
-		filter_atk = parse_filter(mainGame->ebAttack->getText(), &filter_atktype);
-		filter_spend = parse_filter(mainGame->ebSpend->getText(), &filter_spendtype);
+		filter_atk = parse_filter(mainGame->ebAttack->getText(), &filter_type_atk);
+		if (mainGame->btnMark[0]->isPressed())
+			filter_marks |= MOVE_MARKER_TOP_LEFT;
+		if (mainGame->btnMark[1]->isPressed())
+			filter_marks |= MOVE_MARKER_TOP;
+		if (mainGame->btnMark[2]->isPressed())
+			filter_marks |= MOVE_MARKER_TOP_RIGHT;
+		if (mainGame->btnMark[3]->isPressed())
+			filter_marks |= MOVE_MARKER_LEFT;
+		if (mainGame->btnMark[4]->isPressed())
+			filter_marks |= MOVE_MARKER_RIGHT;
+		if (mainGame->btnMark[5]->isPressed())
+			filter_marks |= MOVE_MARKER_BOTTOM_LEFT;
+		if (mainGame->btnMark[6]->isPressed())
+			filter_marks |= MOVE_MARKER_BOTTOM;
+		if (mainGame->btnMark[7]->isPressed())
+			filter_marks |= MOVE_MARKER_BOTTOM_RIGHT;
 	}
+	if (filter_type_main == 4)  // area
+		filter_life = parse_filter(mainGame->ebLife->getText(), &filter_type_life);
+	else if (filter_type_main != 0)  // mons call bane
+		filter_energy = parse_filter(mainGame->ebEnergy->getText(), &filter_type_energy);
 	FilterCards();
 }
 void DeckBuilder::FilterCards() {
@@ -1436,58 +1483,73 @@ void DeckBuilder::FilterCards() {
 		const CardString& strings = strpointer->second;
 		if(data.type & TYPE_TOKEN)
 			continue;
-		switch(filter_type) {
+		switch(filter_type_main) {
 		case 1: {
-			if(!(data.type & TYPE_MONS) || (data.type & filter_type2) != filter_type2)
+			if (!(data.type & TYPE_MONS) || (data.type & filter_type_sub) != filter_type_sub)
 				continue;
-			if(filter_race && data.race != filter_race)
+			if (filter_race && data.race != filter_race)
 				continue;
-			if(filter_from && data.from != filter_from)
+			if (filter_from && data.from != filter_from)
 				continue;
-			if(filter_atktype) {
-				if((filter_atktype == 1 && data.atk != filter_atk) || (filter_atktype == 2 && data.atk < filter_atk)
-				        || (filter_atktype == 3 && data.atk <= filter_atk) || (filter_atktype == 4 && (data.atk > filter_atk || data.atk < 0))
-				        || (filter_atktype == 5 && (data.atk >= filter_atk || data.atk < 0)) || (filter_atktype == 6 && data.atk != -2))
+			if (filter_type_atk) {
+				if ((filter_type_atk == 1 && data.atk != filter_atk) ||
+					(filter_type_atk == 2 && data.atk < filter_atk) ||
+					(filter_type_atk == 3 && data.atk <= filter_atk) ||
+					(filter_type_atk == 4 && (data.atk > filter_atk || data.atk < 0)) ||
+					(filter_type_atk == 5 && (data.atk >= filter_atk || data.atk < 0)) ||
+					(filter_type_atk == 6 && data.atk != -2))
 					continue;
 			}
-			if(filter_spendtype) {
-				if((filter_spendtype == 1 && data.level != filter_spend) || (filter_spendtype == 2 && data.level < filter_spend)
-				        || (filter_spendtype == 3 && data.level <= filter_spend) || (filter_spendtype == 4 && data.level > filter_spend)
-				        || (filter_spendtype == 5 && data.level >= filter_spend) || filter_spendtype == 6)
+			if (filter_type_energy) {
+				if ((filter_type_energy == 1 && data.energy != filter_energy) ||
+					(filter_type_energy == 2 && data.energy < filter_energy) ||
+					(filter_type_energy == 3 && data.energy <= filter_energy) ||
+					(filter_type_energy == 4 && data.energy > filter_energy) ||
+					(filter_type_energy == 5 && data.energy >= filter_energy) ||
+					filter_type_energy == 6)
 					continue;
 			}
-			if(filter_lifetype) {
-				if((filter_lifetype == 1 && data.lscale != filter_life) || (filter_lifetype == 2 && data.lscale < filter_life)
-				        || (filter_lifetype == 3 && data.lscale <= filter_life) || (filter_lifetype == 4 && (data.lscale > filter_life))
-				        || (filter_lifetype == 5 && (data.lscale >= filter_life)) || filter_lifetype == 6
-				        || !(data.type & TYPE_PENDULUM))
-					continue;
-			}
+			if (filter_marks && (data.move & filter_marks) != filter_marks)
+				continue;
 			break;
 		}
 		case 2: {
 			if(!(data.type & TYPE_CALL))
 				continue;
-			if(filter_type2 && data.type != filter_type2)
+			if(filter_type_sub && data.type != filter_type_sub)
 				continue;
 			break;
 		}
 		case 3: {
 			if(!(data.type & TYPE_BANE))
 				continue;
-			if(filter_type2 && data.type != filter_type2)
+			if(filter_type_sub && data.type != filter_type_sub)
 				continue;
 			break;
 		}
+		case 4: {
+			if (!(data.type & TYPE_AREA))
+				continue;
+			if (filter_type_life) {
+				if ((filter_type_life == 1 && data.life != filter_life) ||
+					(filter_type_life == 2 && data.life < filter_life) ||
+					(filter_type_life == 3 && data.life <= filter_life) ||
+					(filter_type_life == 4 && data.life > filter_life) ||
+					(filter_type_life == 5 && data.life >= filter_life) ||
+					filter_type_life == 6)
+					continue;
+			}
+			break;
 		}
-		if(filter_marks && (data.move_marker & filter_marks) != filter_marks)
-			continue;
-		if(filter_lm) {
-			if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
+		}
+		if (filter_limit) {
+			if (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_limit - 1)
 				continue;
-			if(filter_lm == 4 && !(data.rule & RULE_OCG))
+		}
+		if (filter_allow) {
+			if (filter_allow == 1 && !(data.allow & ALLOW_EFCG))
 				continue;
-			if(filter_lm == 5 && !(data.rule & RULE_DIY))
+			if (filter_allow == 2 && !(data.allow & ALLOW_DIY))
 				continue;
 		}
 		bool is_target = true;
@@ -1532,17 +1594,15 @@ void DeckBuilder::InstantSearch() {
 		StartFilter();
 }
 void DeckBuilder::ClearSearch() {
-	mainGame->cbCardType->setSelected(0);
-	mainGame->cbCardType2->setSelected(0);
-	mainGame->cbCardType2->setEnabled(false);
+	mainGame->cbMainType->setSelected(0);
+	mainGame->cbSubType->setSelected(0);
+	mainGame->cbSubType->setEnabled(false);
 	mainGame->cbRace->setEnabled(false);
 	mainGame->cbFrom->setEnabled(false);
 	mainGame->ebAttack->setEnabled(false);
-	mainGame->ebSpend->setEnabled(false);
+	mainGame->ebEnergy->setEnabled(false);
 	mainGame->ebLife->setEnabled(false);
 	mainGame->ebKeyword->setText(L"");
-	mainGame->scrFilter->setVisible(false);
-	mainGame->scrFilter->setPos(0);
 	ClearFilter();
 	results.clear();
 	myswprintf(result_string, L"%d", 0);
@@ -1551,10 +1611,17 @@ void DeckBuilder::ClearFilter() {
 	mainGame->cbFrom->setSelected(0);
 	mainGame->cbRace->setSelected(0);
 	mainGame->cbLimit->setSelected(0);
+	mainGame->cbAllow->setSelected(0);
 	mainGame->ebAttack->setText(L"");
-	mainGame->ebSpend->setText(L"");
+	mainGame->ebEnergy->setText(L"");
 	mainGame->ebLife->setText(L"");
+	mainGame->btnMoveMarksFilter->setEnabled(false);
+	mainGame->btnMoveMarksFilter->setText(dataManager.GetSysString(1080));
 	mainGame->btnMoveMarksFilter->setPressed(false);
+	for (int i = 0; i < 8; ++i)
+		mainGame->btnMark[i]->setPressed(false);
+	mainGame->scrFilter->setVisible(false);
+	mainGame->scrFilter->setPos(0);
 }
 void DeckBuilder::SortList() {
 	auto left = results.begin();
@@ -1567,13 +1634,13 @@ void DeckBuilder::SortList() {
 	}
 	switch(mainGame->cbSortType->getSelected()) {
 	case 0:
-		std::sort(left, results.end(), DataManager::deck_sort_lv);
+		std::sort(left, results.end(), DataManager::deck_sort_energy);
 		break;
 	case 1:
 		std::sort(left, results.end(), DataManager::deck_sort_atk);
 		break;
 	case 2:
-		std::sort(left, results.end(), DataManager::deck_sort_def);
+		std::sort(left, results.end(), DataManager::deck_sort_life);
 		break;
 	case 3:
 		std::sort(left, results.end(), DataManager::deck_sort_name);
@@ -1747,13 +1814,13 @@ bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needl
 	return false;
 }
 bool DeckBuilder::push_main(code_pointer pointer, int seq) {
-	if(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
+	if (pointer->second.type & TYPE_AREA)
 		return false;
 	auto& container = deckManager.current_deck.main;
 	int maxc = mainGame->is_siding ? DECK_MAX_SIZE + 5 : DECK_MAX_SIZE;
-	if((int)container.size() >= maxc)
+	if ((int)container.size() >= maxc)
 		return false;
-	if(seq >= 0 && seq < (int)container.size())
+	if (seq >= 0 && seq < (int)container.size())
 		container.insert(container.begin() + seq, pointer);
 	else
 		container.push_back(pointer);
@@ -1761,14 +1828,14 @@ bool DeckBuilder::push_main(code_pointer pointer, int seq) {
 	GetHoveredCard();
 	return true;
 }
-bool DeckBuilder::push_extra(code_pointer pointer, int seq) {
-	if(!(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
+bool DeckBuilder::push_area(code_pointer pointer, int seq) {
+	if (!(pointer->second.type & TYPE_AREA))
 		return false;
-	auto& container = deckManager.current_deck.extra;
-	int maxc = mainGame->is_siding ? EXTRA_MAX_SIZE + 5 : EXTRA_MAX_SIZE;
-	if((int)container.size() >= maxc)
+	auto& container = deckManager.current_deck.area;
+	int maxc = mainGame->is_siding ? ADECK_MAX_SIZE + 5 : ADECK_MAX_SIZE;
+	if ((int)container.size() >= maxc)
 		return false;
-	if(seq >= 0 && seq < (int)container.size())
+	if (seq >= 0 && seq < (int)container.size())
 		container.insert(container.begin() + seq, pointer);
 	else
 		container.push_back(pointer);
@@ -1795,8 +1862,8 @@ void DeckBuilder::pop_main(int seq) {
 	is_modified = true;
 	GetHoveredCard();
 }
-void DeckBuilder::pop_extra(int seq) {
-	auto& container = deckManager.current_deck.extra;
+void DeckBuilder::pop_area(int seq) {
+	auto& container = deckManager.current_deck.area;
 	container.erase(container.begin() + seq);
 	is_modified = true;
 	GetHoveredCard();
@@ -1817,7 +1884,7 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 		if (card->first == limitcode || card->second.alias == limitcode)
 			limit--;
 	}
-	for (auto& card : deckManager.current_deck.extra) {
+	for (auto& card : deckManager.current_deck.area) {
 		if (card->first == limitcode || card->second.alias == limitcode)
 			limit--;
 	}

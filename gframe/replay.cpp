@@ -258,12 +258,12 @@ bool Replay::ReadInfo() {
 				deck.main.resize(main);
 			if (!ReadData(deck.main.data(), main * sizeof(uint32_t)))
 				return false;
-			uint32_t extra = Read<uint32_t>();
-			if (extra > MAINC_MAX)
+			uint32_t area = Read<uint32_t>();
+			if (area > MAINC_MAX)
 				return false;
-			if (extra)
-				deck.extra.resize(extra);
-			if (!ReadData(deck.extra.data(), extra * sizeof(uint32_t)))
+			if (area)
+				deck.area.resize(area);
+			if (!ReadData(deck.area.data(), area * sizeof(uint32_t)))
 				return false;
 			decks.push_back(deck);
 		}
